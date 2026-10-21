@@ -24,28 +24,35 @@ storage_mode = st.sidebar.selectbox(
 )
 
 st.sidebar.markdown("---")
-gemini_api_key = st.sidebar.text_input("🔑 Google Gemini API Key", type="password")
+
+# 1. Google Gemini API Key Expander
+with st.sidebar.expander("🔑 Google Gemini API Key", expanded=False):
+    gemini_api_key = st.text_input("API Key", type="password", label_visibility="collapsed")
 
 if gemini_api_key:
     genai.configure(api_key=gemini_api_key)
 
 if storage_mode == "Google Sheets":
-    st.sidebar.subheader("📊 Google Sheets Configuration")
-    gsheet_json = st.sidebar.text_input("Service Account JSON Key (or Path)", type="password")
-    gsheet_url = st.sidebar.text_input("Spreadsheet URL / ID")
+    with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
+        gsheet_json = st.text_input("Service Account JSON Key", type="password")
+        gsheet_url = st.text_input("Spreadsheet URL / ID")
 
-st.sidebar.subheader("🎵 TikTok Credentials")
-tiktok_token = st.sidebar.text_input("TikTok Access Token", type="password")
+# 2. TikTok Credentials Expander
+with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
+    tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
 
-st.sidebar.subheader("📺 YouTube Credentials")
-yt_secret = st.sidebar.text_input("YouTube Client Secret", type="password")
+# 3. YouTube Credentials Expander
+with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
+    yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-st.sidebar.subheader("🔔 Telegram Notification Settings")
-tg_token = st.sidebar.text_input("Telegram Bot Token", type="password")
-tg_chat_id = st.sidebar.text_input("Telegram Chat ID")
+# 4. Telegram Notification Settings Expander
+with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
+    tg_token = st.text_input("Telegram Bot Token", type="password")
+    tg_chat_id = st.text_input("Telegram Chat ID")
 
-st.sidebar.subheader("⏰ Background Scheduler Settings")
-schedule_freq = st.sidebar.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"])
+# 5. Background Scheduler Settings Expander
+with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
+    schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
 
 # --- MAIN INTERFACE ---
 st.title("🚀 UNME Multi-Platform AI Social Media Workflow")
