@@ -170,8 +170,8 @@ if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload �
         results = []
         
         if pub_fb:
-    res_fb = upload_to_facebook(media_file_path, final_caption, post_type=post_type)
-    results.append(res_fb)
+            res_fb = upload_to_facebook(media_file_path, final_caption, post_type=post_type)
+            results.append(res_fb)
         if pub_tiktok:
             res_tk = upload_to_tiktok(media_file_path, final_caption)
             results.append(res_tk)
@@ -212,7 +212,7 @@ if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload �
                     
                     st.success("បានបញ្ជូន និងកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
                 except Exception as e:
-                    st.error(f"មានបញ្ហាក្នុងการកត់ត្រាចូល Google Sheets៖ {e}")
+                    st.error(f"មានបញ្ហាក្នុងការកត់ត្រាចូល Google Sheets៖ {e}")
             else:
                 st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន។")
     else:
