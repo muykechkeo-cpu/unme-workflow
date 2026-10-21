@@ -84,7 +84,7 @@ if input_method == "Upload ឯកសារផ្ទាល់ (.mp4)":
             f.write(uploaded_file.getbuffer())
         st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
 else:
-    video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ฯลฯ):")
+    video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ):")
     if video_url and st.button("📥 ទាញយកវីដេអូ"):
         with st.spinner("កំពុងទាញយកវីដេអូតាមរយៈ yt-dlp..."):
             ydl_opts = {
