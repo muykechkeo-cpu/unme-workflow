@@ -23,7 +23,7 @@ st.set_page_config(
 st.sidebar.title("⚙️ System Configuration")
 
 storage_mode = st.sidebar.selectbox(
-    "📁 History Storage Mode",
+    "📁 History Display Mode (ជ្រើសរើសប្រភេទបង្ហាញលើតារាង)",
     ["Local history.json", "Google Sheets"]
 )
 
@@ -45,10 +45,9 @@ with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
 # 2. Google Sheets Configuration Expander
 gsheet_json = ""
 gsheet_url = ""
-if storage_mode == "Google Sheets":
-    with st.sidebar.expander("📊 Google Sheets Configuration", expanded=True):
-        gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
-        gsheet_url = st.text_input("Spreadsheet URL / ID")
+with st.sidebar.expander("📊 Google Sheets Configuration", expanded=True):
+    gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
+    gsheet_url = st.text_input("Spreadsheet URL / ID")
 
 # 3. TikTok Credentials Expander
 with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
@@ -94,20 +93,23 @@ with left_col:
                     f.write(uploaded_file.getbuffer())
                 st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
         else:
-            video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ):")
-            if video_url and st.button("📥 ទាញយកវីដេអូ"):
-                with st.spinner("កំពុងទាញយកវីដេអូតាមរយៈ yt-dlp..."):
-                    ydl_opts = {
-                        'outtmpl': 'downloaded_video.mp4',
-                        'format': 'best'
-                    }
-                    try:
-                        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                            ydl.download([video_url])
-                        media_file_path = 'downloaded_video.mp4'
-                        st.success("ទាញយកវីដេអូបានដោយជោគជ័យ!")
-                    except Exception as e:
-                        st.error(f"មានបញ្ហាក្នុងការទាញយកវីដេអូ៖ {e}")
+            video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ฯ):")
+            if st.button("📥 ទាញយកវីដេអូ"):
+                if video_url:
+                    with st.spinner("កំពុងទាញយកវីដេអូតាមរយៈ yt-dlp..."):
+                        ydl_opts = {
+                            'outtmpl': 'downloaded_video.mp4',
+                            'format': 'best'
+                        }
+                        try:
+                            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                                ydl.download([video_url])
+                            media_file_path = 'downloaded_video.mp4'
+                            st.success("ទាញយកវីដេអូបានដោយជោគជ័យ!")
+                        except Exception as e:
+                            st.error(f"មានបញ្ហាក្នុងការទាញយកវីដេអូ៖ {e}")
+                else:
+                    st.warning("សូមបញ្ចូល Link វីដេអូជាមុនសិន។")
 
     else:  # Picture / Photo Posts
         uploaded_image = st.file_uploader("ជ្រើសរើសរូបភាពសម្រាប់ផុស", type=["jpg", "jpeg", "png"])
@@ -182,14 +184,15 @@ with left_col:
                 res_yt = upload_to_youtube(media_file_path, "AI Generated Content", final_caption)
                 results.append(res_yt)
                 
-            st.success("ការបញ្ជូនបានបញ្ចប់!")
+            st.success("การបញ្ជូនបានបញ្ចប់!")
             st.json(results)
             
-            # --- STORAGE HANDLING ---
+            # --- STORAGE HANDLING (Dual Save: Local & Google Sheets) ---
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            history_entry = {"type": post_type, "file": media_file_path, "caption": final_caption, "results": results, "time": timestamp}
             
-            if storage_mode == "Local history.json":
-                history_entry = {"type": post_type, "file": media_file_path, "caption": final_caption, "results": results, "time": timestamp}
+            # 1. Save to Local history.json
+            try:
                 if os.path.exists("history.json"):
                     with open("history.json", "r", encoding="utf-8") as f:
                         history_data = json.load(f)
@@ -199,25 +202,24 @@ with left_col:
                 history_data.append(history_entry)
                 with open("history.json", "w", encoding="utf-8") as f:
                     json.dump(history_data, f, ensure_ascii=False, indent=4)
-                    
-                st.info("បានរក្សាទុកប្រវត្តិក្នុងប្រព័ន្ធ Local history.json រួចរាល់។")
+                st.info("✅ បានរក្សាទុកប្រវត្តិក្នុង Local history.json រួចរាល់។")
+            except Exception as e:
+                st.error(f"មានបញ្ហាក្នុងการរក្សាទុក Local history.json៖ {e}")
                 
-            elif storage_mode == "Google Sheets":
-                if gsheet_json and gsheet_url:
-                    try:
-                        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                        creds_dict = json.loads(gsheet_json)
-                        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-                        client = gspread.authorize(creds)
-                        
-                        sheet = client.open_by_url(gsheet_url).sheet1
-                        sheet.append_row([post_type, media_file_path, final_caption, str(results), timestamp])
-                        
-                        st.success("បានបញ្ជូន និងកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
-                    except Exception as e:
-                        st.error(f"មានបញ្ហាក្នុងការកត់ត្រាចូល Google Sheets៖ {e}")
-                else:
-                    st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន។")
+            # 2. Save to Google Sheets
+            if gsheet_json and gsheet_url:
+                try:
+                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+                    creds_dict = json.loads(gsheet_json)
+                    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+                    client = gspread.authorize(creds)
+                    
+                    sheet = client.open_by_url(gsheet_url).sheet1
+                    sheet.append_row([post_type, media_file_path, final_caption, str(results), timestamp])
+                    
+                    st.success("✅ បានកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
+                except Exception as e:
+                    st.error(f"មានបញ្ហាក្នុងการកត់ត្រាចូល Google Sheets៖ {e}")
         else:
             st.warning("សូមทำการ Upload ឬទាញយកឯកសារមាតិកាជាមុនសិន។")
 
@@ -260,4 +262,4 @@ with right_col:
             except Exception as e:
                 st.error(f"មានបញ្ហាក្នុងការទាញយកទិន្នន័យពី Google Sheets៖ {e}")
         else:
-            st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL នៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
+            st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
