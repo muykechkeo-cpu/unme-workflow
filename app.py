@@ -2,7 +2,6 @@ import os
 import json
 import streamlit as st
 from dotenv import load_dotenv
-import yt_dlp
 import google.generativeai as genai
 import openai
 import gspread
@@ -83,37 +82,14 @@ with left_col:
     media_file_path = None
 
     if post_type == "🎥 Video / Reels":
-        input_method = st.radio("ជ្រើសរើសវិធីសាស្ត្របញ្ចូលវីដេអូ៖", ["Upload ឯកសារផ្ទាល់ (.mp4)", "ទាញយកពី Link (YouTube/TikTok/etc.)"])
-        
-        if input_method == "Upload ឯកសារផ្ទាល់ (.mp4)":
-            uploaded_file = st.file_uploader("ជ្រើសរើសឯកសារវីដេអូ", type=["mp4", "mov", "avi"])
-            if uploaded_file is not None:
-                media_file_path = os.path.join(".", uploaded_file.name)
-                with open(media_file_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-                st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
-        else:
-            video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ฯลฯ):")
-            if st.button("📥 ទាញយកវីដេអូ"):
-                if video_url:
-                    with st.spinner("កំពុងទាញយកវីដេអូតាមរយៈ yt-dlp..."):
-                        ydl_opts = {
-                            'outtmpl': 'downloaded_video.mp4',
-                            'format': 'bestvideo+bestaudio/best',
-                            'merge_output_format': 'mp4'
-                        }
-                        try:
-                            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                                ydl.download([video_url])
-                            media_file_path = 'downloaded_video.mp4'
-                            st.success("ទាញយកវីដេអូបានដោយជោគជ័យ!")
-                        except Exception as e:
-                            st.error(f"មានបញ្ហាក្នុងការទាញយកវីដេអូ៖ {e}")
-                else:
-                    st.warning("សូមបញ្ចូល Link វីដេអូជាមុនសិន។")
-
+        uploaded_file = st.file_uploader("ជ្រើសរើសឯកសារវីដេអូផ្ទាល់ (.mp4, .mov, .avi)", type=["mp4", "mov", "avi"])
+        if uploaded_file is not None:
+            media_file_path = os.path.join(".", uploaded_file.name)
+            with open(media_file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
     else:  # Picture / Photo Posts
-        uploaded_image = st.file_uploader("ជ្រើសរើសរូបភាពសម្រាប់ផុស", type=["jpg", "jpeg", "png"])
+        uploaded_image = st.file_uploader("ជ្រើសរើសរូបភាពសម្រាប់ផុស (.jpg, .jpeg, .png)", type=["jpg", "jpeg", "png"])
         if uploaded_image is not None:
             media_file_path = os.path.join(".", uploaded_image.name)
             with open(media_file_path, "wb") as f:
@@ -222,7 +198,7 @@ with left_col:
                 except Exception as e:
                     st.error(f"មានបញ្ហាក្នុងការកត់ត្រាចូល Google Sheets៖ {e}")
         else:
-            st.warning("សូមធ្វើការ Upload ឬទាញយកឯកសារមាតិកាជាមុនសិន។")
+            st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
 
 with right_col:
     # --- VIEW HISTORY TABLE SECTION (RIGHT COLUMN) ---
