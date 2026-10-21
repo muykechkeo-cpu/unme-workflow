@@ -93,13 +93,14 @@ with left_col:
                     f.write(uploaded_file.getbuffer())
                 st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
         else:
-            video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ฯ):")
+            video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ฯลฯ):")
             if st.button("📥 ទាញយកវីដេអូ"):
                 if video_url:
                     with st.spinner("កំពុងទាញយកវីដេអូតាមរយៈ yt-dlp..."):
                         ydl_opts = {
                             'outtmpl': 'downloaded_video.mp4',
-                            'format': 'best'
+                            'format': 'bestvideo+bestaudio/best',
+                            'merge_output_format': 'mp4'
                         }
                         try:
                             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -184,7 +185,7 @@ with left_col:
                 res_yt = upload_to_youtube(media_file_path, "AI Generated Content", final_caption)
                 results.append(res_yt)
                 
-            st.success("การបញ្ជូនបានបញ្ចប់!")
+            st.success("ការបញ្ជូនបានបញ្ចប់!")
             st.json(results)
             
             # --- STORAGE HANDLING (Dual Save: Local & Google Sheets) ---
@@ -204,7 +205,7 @@ with left_col:
                     json.dump(history_data, f, ensure_ascii=False, indent=4)
                 st.info("✅ បានរក្សាទុកប្រវត្តិក្នុង Local history.json រួចរាល់។")
             except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងการរក្សាទុក Local history.json៖ {e}")
+                st.error(f"មានបញ្ហាក្នុងការរក្សាទុក Local history.json៖ {e}")
                 
             # 2. Save to Google Sheets
             if gsheet_json and gsheet_url:
@@ -219,9 +220,9 @@ with left_col:
                     
                     st.success("✅ បានកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
                 except Exception as e:
-                    st.error(f"មានបញ្ហាក្នុងการកត់ត្រាចូល Google Sheets៖ {e}")
+                    st.error(f"មានបញ្ហាក្នុងការកត់ត្រាចូល Google Sheets៖ {e}")
         else:
-            st.warning("សូមทำการ Upload ឬទាញយកឯកសារមាតិកាជាមុនសិន។")
+            st.warning("សូមធ្វើការ Upload ឬទាញយកឯកសារមាតិកាជាមុនសិន។")
 
 with right_col:
     # --- VIEW HISTORY TABLE SECTION (RIGHT COLUMN) ---
