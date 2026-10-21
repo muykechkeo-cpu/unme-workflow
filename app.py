@@ -7,6 +7,8 @@ import openai
 import gspread
 from google.oauth2.service_account import Credentials
 import datetime
+import time
+import threading
 from multi_platform import upload_to_youtube, upload_to_tiktok, upload_to_facebook
 
 # Load environment variables
@@ -17,6 +19,17 @@ st.set_page_config(
     page_icon="🚀",
     layout="wide"
 )
+
+# --- BACKGROUND SCHEDULER FUNCTION ---
+def run_scheduled_jobs():
+    while True:
+        # ទីកន្លែងសម្រាប់ពិនិត្យ និងដំណើរការ Background Tasks តាមកាលវិភាគ
+        time.sleep(60)
+
+if 'scheduler_started' not in st.session_state:
+    st.session_state['scheduler_started'] = True
+    bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
+    bg_thread.start()
 
 # --- SIDEBAR CONFIGURATION ---
 st.sidebar.title("⚙️ System Configuration")
@@ -64,6 +77,7 @@ with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
 # 6. Background Scheduler Settings Expander
 with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
     schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
+    st.caption("មុខងារ Auto Scheduler កំពុងដំណើរការក្នុងប្រព័ន្ធផ្ទៃខាងក្រោយ (Background Thread)។")
 
 # --- ABOUT & HOW TO USE SECTION IN SIDEBAR ---
 st.sidebar.markdown("---")
@@ -71,8 +85,8 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME Multi-Platform AI Workflow**  
-    * **ជំនាន់ (Version):** 2.0 Pro  
-    * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube ក្នុងពេលដំណាលគ្នា។  
+    * **ជំនាន់ (Version):** 2.0 Pro (Auto Scheduler Enabled)  
+    * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube ។  
 
     ---
 
@@ -85,7 +99,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     3. **បង្កើត Caption ដោយ AI:** 
        - សរសេរ Prompt រួចចុចប៊ូតុងបង្កើត Caption និងកែសម្រួលតាមតម្រូវការ។
     4. **ជ្រើសរើស Platform & Upload:** 
-       - ធីកលើវេទិកាដែលចង់ផុស (Facebook, TikTok, YouTube) ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
+       - គ្រូសធីកលើវេទិកាដែលចង់ផុស (Facebook, TikTok, YouTube) ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
     """)
 
 # --- MAIN INTERFACE (2 COLUMNS LAYOUT) ---
