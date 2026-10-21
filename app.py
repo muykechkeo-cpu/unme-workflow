@@ -91,7 +91,7 @@ if post_type == "🎥 Video / Reels":
                 f.write(uploaded_file.getbuffer())
             st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
     else:
-        video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ฯลฯ):")
+        video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ฯលฯ):")
         if video_url and st.button("📥 ទាញយកវីដេអូ"):
             with st.spinner("កំពុងទាញយកវីដេអូតាមរយៈ yt-dlp..."):
                 ydl_opts = {
@@ -217,3 +217,44 @@ if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload �
                 st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន។")
     else:
         st.warning("សូមทำการ Upload ឬទាញយកឯកសារមាតិកាជាមុនសិន។")
+
+# --- VIEW HISTORY TABLE SECTION ---
+st.markdown("---")
+st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
+
+if st.button("🔄 ផ្ទុកទិន្នន័យប្រវត្តិការងារឡើងវិញ"):
+    st.rerun()
+
+if storage_mode == "Local history.json":
+    if os.path.exists("history.json"):
+        try:
+            with open("history.json", "r", encoding="utf-8") as f:
+                history_data = json.load(f)
+            if history_data:
+                st.dataframe(history_data, use_container_width=True)
+            else:
+                st.info("មិនទាន់មានប្រវត្តិការងារក្នុង Local history.json នៅឡើយទេ។")
+        except Exception as e:
+            st.error(f"មានបញ្ហាក្នុងការអានឯកសារ history.json៖ {e}")
+    else:
+        st.info("មិនទាន់មានឯកសារ history.json ទេ។")
+
+elif storage_mode == "Google Sheets":
+    if gsheet_json and gsheet_url:
+        try:
+            scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+            creds_dict = json.loads(gsheet_json)
+            creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+            client = gspread.authorize(creds)
+            
+            sheet = client.open_by_url(gsheet_url).sheet1
+            records = sheet.get_all_records()
+            
+            if records:
+                st.dataframe(records, use_container_width=True)
+            else:
+                st.info("Google Sheet របស់អ្នកនៅទទេ។")
+        except Exception as e:
+            st.error(f"មានបញ្ហាក្នុងការទាញយកទិន្នន័យពី Google Sheets៖ {e}")
+    else:
+        st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL នៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
