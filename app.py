@@ -170,8 +170,8 @@ if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload �
         results = []
         
         if pub_fb:
-            res_fb = upload_to_facebook(media_file_path, final_caption)
-            results.append(res_fb)
+    res_fb = upload_to_facebook(media_file_path, final_caption, post_type=post_type)
+    results.append(res_fb)
         if pub_tiktok:
             res_tk = upload_to_tiktok(media_file_path, final_caption)
             results.append(res_tk)
