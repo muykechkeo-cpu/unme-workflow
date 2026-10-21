@@ -65,6 +65,29 @@ with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
 with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
     schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
 
+# --- ABOUT & HOW TO USE SECTION IN SIDEBAR ---
+st.sidebar.markdown("---")
+with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស់", expanded=False):
+    st.markdown("""
+    ### 🚀 អំពីកម្មវិធី (About)
+    **UNME Multi-Platform AI Workflow**  
+    * **ជំនាន់ (Version):** 2.0 Pro  
+    * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube ក្នុងពេលដំណាលគ្នា។  
+
+    ---
+
+    ### 📖 របៀបប្រើប្រាស់ (How to Use)
+    1. **កំណត់ការតភ្ជាប់ (Sidebar):** 
+       - បញ្ចូល API Key របស់ Google Gemini ឬ OpenAI ។
+       - បំពេញ Google Sheets JSON Key និង URL (ប្រសិនបើចង់រក្សាទុកប្រវត្តិលើ Cloud)។
+    2. **ជ្រើសរើសប្រភេទផុស (Post Type):** 
+       - ជ្រើសរើសរវាង **Video / Reels** ឬ **Picture / Photo Posts** រួច Upload ឯកសារផ្ទាល់។
+    3. **បង្កើត Caption ដោយ AI:** 
+       - សរសេរ Prompt រួចចុចប៊ូតុងបង្កើត Caption និងកែសម្រួលតាមតម្រូវការ។
+    4. **ជ្រើសរើស Platform & Upload:** 
+       - គ្រូសធីកលើវេទិកាដែលចង់ផុស (Facebook, TikTok, YouTube) ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
+    """)
+
 # --- MAIN INTERFACE (2 COLUMNS LAYOUT) ---
 st.title("🚀 UNME Multi-Platform AI Social Media Workflow")
 st.markdown("ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube")
