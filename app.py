@@ -4,6 +4,7 @@ import streamlit as st
 from dotenv import load_dotenv
 import yt_dlp
 import google.generativeai as genai
+import openai
 from multi_platform import upload_to_youtube, upload_to_tiktok, upload_to_facebook
 
 # Load environment variables
@@ -25,32 +26,38 @@ storage_mode = st.sidebar.selectbox(
 
 st.sidebar.markdown("---")
 
-# 1. Google Gemini API Key Expander
-with st.sidebar.expander("🔑 Google Gemini API Key", expanded=False):
-    gemini_api_key = st.text_input("API Key", type="password", label_visibility="collapsed")
-
-if gemini_api_key:
-    genai.configure(api_key=gemini_api_key)
+# AI Provider Selection Expander
+with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
+    ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
+    
+    if ai_provider == "Google Gemini":
+        gemini_api_key = st.text_input("Google Gemini API Key", type="password")
+        if gemini_api_key:
+            genai.configure(api_key=gemini_api_key)
+    else:
+        openai_api_key = st.text_input("OpenAI API Key", type="password")
+        if openai_api_key:
+            openai.api_key = openai_api_key
 
 if storage_mode == "Google Sheets":
     with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
         gsheet_json = st.text_input("Service Account JSON Key", type="password")
         gsheet_url = st.text_input("Spreadsheet URL / ID")
 
-# 2. TikTok Credentials Expander
+# TikTok Credentials Expander
 with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
     tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
 
-# 3. YouTube Credentials Expander
+# YouTube Credentials Expander
 with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
     yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-# 4. Telegram Notification Settings Expander
+# Telegram Notification Settings Expander
 with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
     tg_token = st.text_input("Telegram Bot Token", type="password")
     tg_chat_id = st.text_input("Telegram Chat ID")
 
-# 5. Background Scheduler Settings Expander
+# Background Scheduler Settings Expander
 with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
     schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
 
@@ -58,7 +65,7 @@ with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
 st.title("🚀 UNME Multi-Platform AI Social Media Workflow")
 st.markdown("ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូទៅកាន់ Facebook, TikTok និង YouTube")
 
-# 1. Video Input Section (Upload or Download via Link)
+# 1. Video Input Section
 st.subheader("📥 បញ្ចូលវីដេអូ ឬទាញយកតាម Link")
 input_method = st.radio("ជ្រើសរើសវិធីសាស្ត្របញ្ចូលវីដេអូ៖", ["Upload ឯកសារផ្ទាល់ (.mp4)", "ទាញយកពី Link (YouTube/TikTok/etc.)"])
 
@@ -85,28 +92,44 @@ else:
                 video_file_path = 'downloaded_video.mp4'
                 st.success("ទាញយកវីដេអូបានដោយជោគជ័យ!")
             except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងការទាញយកវីដេអូ៖ {e}")
+                st.error(f"មានបញ្ហាក្នុងการទាញយកវីដេអូ៖ {e}")
 
 # 2. AI Caption Customization & Generation
-st.subheader("🤖 ការកំណត់ស្ទីល និងជំនួយការពី AI Caption")
+st.subheader(f"🤖 ការកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
 caption_prompt = st.text_area(
     "សរសេរពាក្យបញ្ជា ឬស្ទីលដែលចង់បានឱ្យ AI បង្កើត៖",
     placeholder="ឧទាហរណ៍៖ សរសេរ Caption ជាភាសាខ្មែរឱ្យទាក់ទាញបែបកំប្លែង ព្រមទាំង Hashtags ល្បីៗ..."
 )
 
 generated_caption = ""
-if st.button("✨ បង្កើត Caption ដោយប្រើ Gemini AI"):
-    if gemini_api_key:
-        try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(f"Write a social media caption and hashtags based on this prompt: {caption_prompt}")
-            generated_caption = response.text
-            st.success("AI បានបង្កើត Caption រួចរាល់!")
-            st.write(generated_caption)
-        except Exception as e:
-            st.error(f"មានកំហុសក្នុងការតភ្ជាប់ Gemini AI៖ {e}")
-    else:
-        st.warning("សូមបញ្ចូល Google Gemini API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន។")
+if st.button(f"✨ បង្កើត Caption โดยใช้ {ai_provider}"):
+    if ai_provider == "Google Gemini":
+        if 'gemini_api_key' in locals() and gemini_api_key:
+            try:
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content(f"Write a social media caption and hashtags based on this prompt: {caption_prompt}")
+                generated_caption = response.text
+                st.success("AI (Gemini) បានបង្កើត Caption រួចរាល់!")
+                st.write(generated_caption)
+            except Exception as e:
+                st.error(f"មានកំហុសក្នុងការតភ្ជាប់ Gemini AI៖ {e}")
+        else:
+            st.warning("សូមបញ្ចូល Google Gemini API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន។")
+    else:  # OpenAI ChatGPT
+        if 'openai_api_key' in locals() and openai_api_key:
+            try:
+                client = openai.OpenAI(api_key=openai_api_key)
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": f"Write a social media caption and hashtags based on this prompt: {caption_prompt}"}]
+                )
+                generated_caption = response.choices[0].message.content
+                st.success("AI (ChatGPT) បានបង្កើត Caption រួចរាល់!")
+                st.write(generated_caption)
+            except Exception as e:
+                st.error(f"មានកំហុសក្នុងការតភ្ជាប់ OpenAI API៖ {e}")
+        else:
+            st.warning("សូមបញ្ចូល OpenAI API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន។")
 
 final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
 
