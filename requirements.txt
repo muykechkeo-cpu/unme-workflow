@@ -1,8 +1,7 @@
 streamlit
-opencv-python-headless
 yt-dlp
 google-generativeai
-gspread
-oauth2client
+openai
 requests
 python-dotenv
+gspread
