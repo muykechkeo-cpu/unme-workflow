@@ -7,6 +7,7 @@ import google.generativeai as genai
 import openai
 import gspread
 from google.oauth2.service_account import Credentials
+import datetime
 from multi_platform import upload_to_youtube, upload_to_tiktok, upload_to_facebook
 
 # Load environment variables
@@ -68,36 +69,50 @@ with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
 
 # --- MAIN INTERFACE ---
 st.title("🚀 UNME Multi-Platform AI Social Media Workflow")
-st.markdown("ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូទៅកាន់ Facebook, TikTok និង YouTube")
+st.markdown("ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube")
 
-# 1. Video Input Section
-st.subheader("📥 បញ្ចូលវីដេអូ ឬទាញយកតាម Link")
-input_method = st.radio("ជ្រើសរើសវិធីសាស្ត្របញ្ចូលវីដេអូ៖", ["Upload ឯកសារផ្ទាល់ (.mp4)", "ទាញយកពី Link (YouTube/TikTok/etc.)"])
+# 1. Post Type & Media Input Section
+st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
+post_type = st.radio(
+    "តើអ្នកចង់ផុសមាតិកាប្រភេទណា?", 
+    ["🎥 Video / Reels", "🖼️ Picture / Photo Posts"]
+)
 
-video_file_path = None
+media_file_path = None
 
-if input_method == "Upload ឯកសារផ្ទាល់ (.mp4)":
-    uploaded_file = st.file_uploader("ជ្រើសរើសឯកសារវីដេអូ", type=["mp4", "mov", "avi"])
-    if uploaded_file is not None:
-        video_file_path = os.path.join(".", uploaded_file.name)
-        with open(video_file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
-else:
-    video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ):")
-    if video_url and st.button("📥 ទាញយកវីដេអូ"):
-        with st.spinner("កំពុងទាញយកវីដេអូតាមរយៈ yt-dlp..."):
-            ydl_opts = {
-                'outtmpl': 'downloaded_video.mp4',
-                'format': 'best'
-            }
-            try:
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([video_url])
-                video_file_path = 'downloaded_video.mp4'
-                st.success("ទាញយកវីដេអូបានដោយជោគជ័យ!")
-            except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងការទាញយកវីដេអូ៖ {e}")
+if post_type == "🎥 Video / Reels":
+    input_method = st.radio("ជ្រើសរើសវិធីសាស្ត្របញ្ចូលវីដេអូ៖", ["Upload ឯកសារផ្ទាល់ (.mp4)", "ទាញយកពី Link (YouTube/TikTok/etc.)"])
+    
+    if input_method == "Upload ឯកសារផ្ទាល់ (.mp4)":
+        uploaded_file = st.file_uploader("ជ្រើសរើសឯកសារវីដេអូ", type=["mp4", "mov", "avi"])
+        if uploaded_file is not None:
+            media_file_path = os.path.join(".", uploaded_file.name)
+            with open(media_file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
+    else:
+        video_url = st.text_input("🔗 បញ្ចូល Link វីដេអូ (YouTube, TikTok, Facebook ฯลฯ):")
+        if video_url and st.button("📥 ទាញយកវីដេអូ"):
+            with st.spinner("កំពុងទាញយកវីដេអូតាមរយៈ yt-dlp..."):
+                ydl_opts = {
+                    'outtmpl': 'downloaded_video.mp4',
+                    'format': 'best'
+                }
+                try:
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        ydl.download([video_url])
+                    media_file_path = 'downloaded_video.mp4'
+                    st.success("ទាញយកវីដេអូបានដោយជោគជ័យ!")
+                except Exception as e:
+                    st.error(f"មានបញ្ហាក្នុងការទាញយកវីដេអូ៖ {e}")
+
+else:  # Picture / Photo Posts
+    uploaded_image = st.file_uploader("ជ្រើសរើសរូបភាពសម្រាប់ផុស", type=["jpg", "jpeg", "png"])
+    if uploaded_image is not None:
+        media_file_path = os.path.join(".", uploaded_image.name)
+        with open(media_file_path, "wb") as f:
+            f.write(uploaded_image.getbuffer())
+        st.success(f"បានផ្ទុកឡើងរូបភាព៖ {uploaded_image.name}")
 
 # 2. AI Caption Customization & Generation
 st.subheader(f"🤖 ការកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
@@ -142,34 +157,36 @@ final_caption = st.text_area("កែសម្រួល Caption ចុងក្�
 st.subheader("🎬 ជ្រើសរើសវេទិកាសម្រាប់ការបញ្ជូន (Multi-Platform Selection)")
 col1, col2, col3 = st.columns(3)
 with col1:
-    pub_fb = st.checkbox("📘 Facebook Reels", value=True)
+    pub_fb = st.checkbox("📘 Facebook", value=True)
 with col2:
     pub_tiktok = st.checkbox("🎵 TikTok")
 with col3:
-    pub_yt = st.checkbox("📺 YouTube Shorts")
+    pub_yt = st.checkbox("📺 YouTube")
 
 # 4. Execution Button
 if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload ទៅកាន់ Platform"):
-    if video_file_path and os.path.exists(video_file_path):
-        st.info("ប្រព័ន្ធកំពុងដំណើរការបញ្ជូនវីដេអូ...")
+    if media_file_path and os.path.exists(media_file_path):
+        st.info("ប្រព័ន្ធកំពុងដំណើរការបញ្ជូនមាតិកា...")
         results = []
         
         if pub_fb:
-            res_fb = upload_to_facebook(video_file_path, final_caption)
+            res_fb = upload_to_facebook(media_file_path, final_caption)
             results.append(res_fb)
         if pub_tiktok:
-            res_tk = upload_to_tiktok(video_file_path, final_caption)
+            res_tk = upload_to_tiktok(media_file_path, final_caption)
             results.append(res_tk)
         if pub_yt:
-            res_yt = upload_to_youtube(video_file_path, "AI Generated Video", final_caption)
+            res_yt = upload_to_youtube(media_file_path, "AI Generated Content", final_caption)
             results.append(res_yt)
             
         st.success("ការបញ្ជូនបានបញ្ចប់!")
         st.json(results)
         
         # --- STORAGE HANDLING ---
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
         if storage_mode == "Local history.json":
-            history_entry = {"file": video_file_path, "caption": final_caption, "results": results}
+            history_entry = {"type": post_type, "file": media_file_path, "caption": final_caption, "results": results, "time": timestamp}
             if os.path.exists("history.json"):
                 with open("history.json", "r", encoding="utf-8") as f:
                     history_data = json.load(f)
@@ -185,24 +202,18 @@ if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload �
         elif storage_mode == "Google Sheets":
             if gsheet_json and gsheet_url:
                 try:
-                    # Parse JSON credentials text
                     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
                     creds_dict = json.loads(gsheet_json)
                     creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
                     client = gspread.authorize(creds)
                     
-                    # Open sheet by URL or key
                     sheet = client.open_by_url(gsheet_url).sheet1
-                    
-                    # Append row data: [File Name, Caption, Results, Timestamp]
-                    import datetime
-                    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    sheet.append_row([video_file_path, final_caption, str(results), timestamp])
+                    sheet.append_row([post_type, media_file_path, final_caption, str(results), timestamp])
                     
                     st.success("បានបញ្ជូន និងកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
                 except Exception as e:
                     st.error(f"មានបញ្ហាក្នុងการកត់ត្រាចូល Google Sheets៖ {e}")
             else:
-                    st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន។")
+                st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន។")
     else:
-        st.warning("សូមทำการ Upload វីដេអូ ឬទាញយកវីដេអូតាម Link ជាមុនសិន។")
+        st.warning("សូមทำการ Upload ឬទាញយកឯកសារមាតិកាជាមុនសិន។")
