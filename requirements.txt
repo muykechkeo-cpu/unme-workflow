@@ -2,6 +2,7 @@ streamlit
 yt-dlp
 google-generativeai
 openai
+gspread
+google-auth
 requests
 python-dotenv
-gspread
