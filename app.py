@@ -85,7 +85,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     3. **បង្កើត Caption ដោយ AI:** 
        - សរសេរ Prompt រួចចុចប៊ូតុងបង្កើត Caption និងកែសម្រួលតាមតម្រូវការ។
     4. **ជ្រើសរើស Platform & Upload:** 
-       - គ្រូសធីកលើវេទិកាដែលចង់ផុស (Facebook, TikTok, YouTube) ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
+       - ធីកលើវេទិកាដែលចង់ផុស (Facebook, TikTok, YouTube) ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
     """)
 
 # --- MAIN INTERFACE (2 COLUMNS LAYOUT) ---
