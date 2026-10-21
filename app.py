@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import yt_dlp
 import google.generativeai as genai
 import openai
+import gspread
+from google.oauth2.service_account import Credentials
 from multi_platform import upload_to_youtube, upload_to_tiktok, upload_to_facebook
 
 # Load environment variables
@@ -26,7 +28,7 @@ storage_mode = st.sidebar.selectbox(
 
 st.sidebar.markdown("---")
 
-# AI Provider Selection Expander
+# 1. AI Provider Selection Expander
 with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
     ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
     
@@ -39,25 +41,28 @@ with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
         if openai_api_key:
             openai.api_key = openai_api_key
 
+# 2. Google Sheets Configuration Expander
+gsheet_json = ""
+gsheet_url = ""
 if storage_mode == "Google Sheets":
-    with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
-        gsheet_json = st.text_input("Service Account JSON Key", type="password")
+    with st.sidebar.expander("📊 Google Sheets Configuration", expanded=True):
+        gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
         gsheet_url = st.text_input("Spreadsheet URL / ID")
 
-# TikTok Credentials Expander
+# 3. TikTok Credentials Expander
 with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
     tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
 
-# YouTube Credentials Expander
+# 4. YouTube Credentials Expander
 with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
     yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-# Telegram Notification Settings Expander
+# 5. Telegram Notification Settings Expander
 with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
     tg_token = st.text_input("Telegram Bot Token", type="password")
     tg_chat_id = st.text_input("Telegram Chat ID")
 
-# Background Scheduler Settings Expander
+# 6. Background Scheduler Settings Expander
 with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
     schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
 
@@ -92,7 +97,7 @@ else:
                 video_file_path = 'downloaded_video.mp4'
                 st.success("ទាញយកវីដេអូបានដោយជោគជ័យ!")
             except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងการទាញយកវីដេអូ៖ {e}")
+                st.error(f"មានបញ្ហាក្នុងការទាញយកវីដេអូ៖ {e}")
 
 # 2. AI Caption Customization & Generation
 st.subheader(f"🤖 ការកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
@@ -102,7 +107,7 @@ caption_prompt = st.text_area(
 )
 
 generated_caption = ""
-if st.button(f"✨ បង្កើត Caption โดยใช้ {ai_provider}"):
+if st.button(f"✨ បង្កើត Caption ដោយប្រើ {ai_provider}"):
     if ai_provider == "Google Gemini":
         if 'gemini_api_key' in locals() and gemini_api_key:
             try:
@@ -162,18 +167,42 @@ if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload �
         st.success("ការបញ្ជូនបានបញ្ចប់!")
         st.json(results)
         
-        # Save to local history.json mode
-        history_entry = {"file": video_file_path, "caption": final_caption, "results": results}
-        if os.path.exists("history.json"):
-            with open("history.json", "r", encoding="utf-8") as f:
-                history_data = json.load(f)
-        else:
-            history_data = []
+        # --- STORAGE HANDLING ---
+        if storage_mode == "Local history.json":
+            history_entry = {"file": video_file_path, "caption": final_caption, "results": results}
+            if os.path.exists("history.json"):
+                with open("history.json", "r", encoding="utf-8") as f:
+                    history_data = json.load(f)
+            else:
+                history_data = []
+                
+            history_data.append(history_entry)
+            with open("history.json", "w", encoding="utf-8") as f:
+                json.dump(history_data, f, ensure_ascii=False, indent=4)
+                
+            st.info("បានរក្សាទុកប្រវត្តិក្នុងប្រព័ន្ធ Local history.json រួចរាល់។")
             
-        history_data.append(history_entry)
-        with open("history.json", "w", encoding="utf-8") as f:
-            json.dump(history_data, f, ensure_ascii=False, indent=4)
-            
-        st.info("បានរក្សាទុកប្រវត្តិក្នុងប្រព័ន្ធ Local history.json រួចរាល់។")
+        elif storage_mode == "Google Sheets":
+            if gsheet_json and gsheet_url:
+                try:
+                    # Parse JSON credentials text
+                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+                    creds_dict = json.loads(gsheet_json)
+                    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+                    client = gspread.authorize(creds)
+                    
+                    # Open sheet by URL or key
+                    sheet = client.open_by_url(gsheet_url).sheet1
+                    
+                    # Append row data: [File Name, Caption, Results, Timestamp]
+                    import datetime
+                    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    sheet.append_row([video_file_path, final_caption, str(results), timestamp])
+                    
+                    st.success("បានបញ្ជូន និងកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
+                except Exception as e:
+                    st.error(f"មានបញ្ហាក្នុងการកត់ត្រាចូល Google Sheets៖ {e}")
+            else:
+                    st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន។")
     else:
         st.warning("សូមทำการ Upload វីដេអូ ឬទាញយកវីដេអូតាម Link ជាមុនសិន។")
