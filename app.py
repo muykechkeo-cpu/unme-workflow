@@ -1,6 +1,10 @@
 import os
 import json
 import re
+import random
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import streamlit as st
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -112,10 +116,48 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# --- EMAIL & OTP HELPERS ---
 def is_valid_email(email):
     pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     return re.match(pattern, email) is not None
 
+def send_verification_email(receiver_email, otp_code):
+    sender_email = "your_email@gmail.com"  # ប្តូរជា Email របស់អ្នក
+    sender_password = "your_app_password"  # ប្តូរជា Google App Password របស់អ្នក
+    
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "UNME AI - Verification Code (OTP)"
+    message["From"] = sender_email
+    message["To"] = receiver_email
+
+    html = f"""
+    <html>
+      <body>
+        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f8fafc; border-radius: 10px;">
+          <h2 style="color: #2563eb;">UNME AI Social Media</h2>
+          <p>សួស្តី,</p>
+          <p>លេខកូដផ្ទៀងផ្ទាត់ (OTP) របស់អ្នកសម្រាប់ចុះឈ្មោះក្នុងប្រព័ន្ធគឺ៖</p>
+          <h1 style="color: #1e293b; background: #e2e8f0; padding: 10px 20px; display: inline-block; border-radius: 5px;">{otp_code}</h1>
+          <p>សូមយកលេខកូដនេះទៅបំពេញក្នុងប្រព័ន្ធដើម្បីបន្តការចុះឈ្មោះ។</p>
+          <p>ដោយសេចក្ដីគោរព,<br><b>Hab Rithy</b></p>
+        </div>
+      </body>
+    </html>
+    """
+    message.attach(MIMEText(html, "html"))
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
+
+# --- USER DATABASE MANAGEMENT (JSON FILE STORAGE) ---
 USER_DB_FILE = "users.json"
 
 def load_users():
@@ -141,10 +183,12 @@ def save_users(users):
     with open(USER_DB_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=4)
 
+# --- AUTHENTICATION STATE HANDLING ---
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
+# --- EMAIL-BASED SIGN IN / SIGN UP INTERFACE (WITH OTP) ---
 if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -175,43 +219,87 @@ if not st.session_state["logged_in"]:
                 else:
                     st.error("អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ!")
         
-        else:  # Sign Up Mode
+        else:  # Sign Up Mode with OTP Verification Steps
             st.subheader("បង្កើតគណនីថ្មី (Sign Up)")
-            signup_name = st.text_input("ឈ្មោះពេញ / Full Name")
-            signup_email = st.text_input("អាសយដ្ឋានអ៊ីមែល (Email Address)", placeholder="example@gmail.com").strip().lower()
-            signup_pass = st.text_input("បង្កើតពាក្យសម្ងាត់ (Choose Password)", type="password")
             
-            if st.button("✨ ចុះឈ្មោះ និងចូលប្រព័ន្ធ (Sign Up)", type="primary"):
-                if not signup_name or not signup_email or not signup_pass:
-                    st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យได้ត្រឹមត្រូវ។")
-                elif not is_valid_email(signup_email):
-                    st.error("ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ!")
-                elif signup_email in users_db:
-                    st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ!")
-                else:
-                    users_db[signup_email] = {
-                        "password": signup_pass,
-                        "name": signup_name,
-                        "role": "user"
-                    }
-                    save_users(users_db)
-                    
-                    # Auto Login ចូលប្រព័ន្ធភ្លាមៗក្រោយពេល Sign Up ជោគជ័យ
-                    st.session_state["logged_in"] = True
-                    st.session_state["user_info"] = {
-                        "email": signup_email,
-                        "name": signup_name,
-                        "role": "user"
-                    }
-                    st.success("ចុះឈ្មោះបានជោគជ័យ និងកំពុងចូលប្រព័ន្ធ...")
-                    time.sleep(0.5)
-                    st.rerun()
+            if "signup_step" not in st.session_state:
+                st.session_state["signup_step"] = 1
+
+            if st.session_state["signup_step"] == 1:
+                signup_name = st.text_input("ឈ្មោះពេញ / Full Name", key="su_name")
+                signup_email = st.text_input("អាសយដ្ឋានអ៊ីមែល (Email Address)", placeholder="example@gmail.com", key="su_email").strip().lower()
+                signup_pass = st.text_input("បង្កើតពាក្យសម្ងាត់ (Choose Password)", type="password", key="su_pass")
+                
+                if st.button("📧 ផ្ញើលេខកូដផ្ទៀងផ្ទាត់ទៅ Email", type="primary"):
+                    if not signup_name or not signup_email or not signup_pass:
+                        st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យបានត្រឹមត្រូវ។")
+                    elif not is_valid_email(signup_email):
+                        st.error("ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ!")
+                    elif signup_email in users_db:
+                        st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ!")
+                    else:
+                        otp = str(random.randint(100000, 999999))
+                        st.session_state["temp_otp"] = otp
+                        st.session_state["temp_user_data"] = {
+                            "name": signup_name,
+                            "email": signup_email,
+                            "password": signup_pass
+                        }
+                        
+                        with st.spinner("កំពុងផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់..."):
+                            success = send_verification_email(signup_email, otp)
+                            if success:
+                                st.success(f"បានផ្ញើលេខកូដទៅកាន់អ៊ីមែល {signup_email} រួចរាល់ហើយ!")
+                                st.session_state["signup_step"] = 2
+                                st.rerun()
+                            else:
+                                st.error("មានបញ្ហាក្នុងការផ្ញើអ៊ីមែល សូមពិនិត្យមើល SMTP Configuration ។")
+
+            elif st.session_state["signup_step"] == 2:
+                st.info(f"សូមពិនិត្យមើលប្រអប់សារ (Inbox/Spam) របស់អ៊ីមែល៖ {st.session_state['temp_user_data']['email']}")
+                entered_otp = st.text_input("បញ្ចូលលេខកូដផ្ទៀងផ្ទាត់ ៦ខ្ទង់ (Enter OTP)", max_chars=6)
+                
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    if st.button("✨ ផ្ទៀងផ្ទាត់ និងចូលប្រព័ន្ធ", type="primary"):
+                        if entered_otp == st.session_state.get("temp_otp"):
+                            user_data = st.session_state["temp_user_data"]
+                            email = user_data["email"]
+                            
+                            users_db[email] = {
+                                "password": user_data["password"],
+                                "name": user_data["name"],
+                                "role": "user"
+                            }
+                            save_users(users_db)
+                            
+                            st.session_state["logged_in"] = True
+                            st.session_state["user_info"] = {
+                                "email": email,
+                                "name": user_data["name"],
+                                "role": "user"
+                            }
+                            
+                            del st.session_state["signup_step"]
+                            del st.session_state["temp_otp"]
+                            del st.session_state["temp_user_data"]
+                            
+                            st.success("ផ្ទៀងផ្ទាត់ និងចូលប្រព័ន្ធជោគជ័យ!")
+                            time.sleep(0.5)
+                            st.rerun()
+                        else:
+                            st.error("លេខកូដ OTP មិនត្រឹមត្រូវឡើយ!")
+                with col_btn2:
+                    if st.button("🔄 ចុះឈ្មោះថ្មី"):
+                        st.session_state["signup_step"] = 1
+                        st.rerun()
                     
         st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
 current_user = st.session_state["user_info"]
 
+# --- MEDIA PROCESSING FUNCTIONS (WATERMARK & EDITING) ---
 def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
     try:
         image = Image.open(input_path).convert("RGBA")
@@ -278,6 +366,7 @@ if 'scheduler_started' not in st.session_state:
     bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
     bg_thread.start()
 
+# --- SIDEBAR CONFIGURATION ---
 st.sidebar.title(f"👤 {current_user['name']}")
 st.sidebar.caption(f"Email: {current_user['email']}")
 
@@ -334,10 +423,11 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.8 Pro (Auto Login Sign Up)  
+    * **ជំនាន់ (Version):** 2.9 Pro (Email OTP Verified)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
+# --- MAIN INTERFACE (FIXED STICKY HEADER) ---
 st.markdown("""
     <div class="sticky-header">
         <h1 style="margin:0; font-size: 26px; font-weight: 700; color: #1e293b;">🚀 UNME AI Social Media</h1>
@@ -345,13 +435,15 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+# --- REORDERED TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
+# --- TAB 1: MAIN DASHBOARD ---
 with tab1:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
@@ -509,6 +601,7 @@ with tab1:
             st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
     st.markdown('</div>', unsafe_allow_html=True)
 
+# --- TAB 2: ANALYTICS DASHBOARD ---
 with tab2:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("📊 Analytics & Performance Dashboard")
@@ -549,6 +642,7 @@ with tab2:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+# --- TAB 3: VIEW HISTORY ---
 with tab3:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
@@ -591,6 +685,7 @@ with tab3:
             st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
     st.markdown('</div>', unsafe_allow_html=True)
 
+# --- TAB 4: SUPPORT CHAT ---
 with tab4:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support Chat & AI Assistant)")
@@ -598,32 +693,4 @@ with tab4:
 
     if "support_messages" not in st.session_state:
         st.session_state["support_messages"] = [
-            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant របស់ UNME (by Hab Rithy)។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
-        ]
-
-    for msg in st.session_state["support_messages"]:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-
-    if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីនេះ..."):
-        st.session_state["support_messages"].append({"role": "user", "content": user_query})
-        with st.chat_message("user"):
-            st.markdown(user_query)
-
-        with st.chat_message("assistant"):
-            with st.spinner("កំពុងពិចារណា..."):
-                try:
-                    if 'gemini_api_key' in locals() and gemini_api_key:
-                        model = genai.GenerativeModel('gemini-1.5-flash')
-                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media built by Hab Rithy'. Answer the user's question professionally: {user_query}")
-                        bot_reply = chat_response.text
-                    else:
-                        bot_reply = "សូមបញ្ចូល Google Gemini API Key នៅផ្នែក Sidebar ខាងឆ្វេងជាមុនសិន ដើម្បីឱ្យ Support AI អាចដំណើរការឆ្លើយតបបាន។"
-                    
-                    st.markdown(bot_reply)
-                    st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
-                except Exception as e:
-                    err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
-                    st.error(err_msg)
-                    st.session_state["support_messages"].append({"role": "assistant", "content": err_msg})
-    st.markdown('</div>', unsafe_allow_html=True)
+            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant របស់>)`](support_messages)
