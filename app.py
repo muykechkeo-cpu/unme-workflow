@@ -98,40 +98,85 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- USER ACCOUNTS CONFIGURATION (DATABASE / DICTIONARY) ---
-# អ្នកអាចបន្ថែម User/Password និង Role នៅទីនេះ (ឬអានចេញពី database)
-USER_DATABASE = {
-    "admin": {"password": "adminpassword", "name": "Hab Rithy (Admin)", "role": "admin"},
-    "user1": {"password": "user123", "name": "Standard User", "role": "user"}
-}
+# --- USER DATABASE MANAGEMENT (JSON FILE STORAGE) ---
+USER_DB_FILE = "users.json"
+
+def load_users():
+    # កំណត់គណនី Admin កាតព្វកិច្ចស្រាប់ក្នុងប្រព័ន្ធ
+    default_users = {
+        "admin": {"password": "adminpassword", "name": "Hab Rithy (Admin)", "role": "admin"}
+    }
+    if os.path.exists(USER_DB_FILE):
+        try:
+            with open(USER_DB_FILE, "r", encoding="utf-8") as f:
+                users = json.load(f)
+                # ធានាថាមាន admin ជានិច្ច
+                if "admin" not in users:
+                    users["admin"] = default_users["admin"]
+                return users
+        except:
+            return default_users
+    return default_users
+
+def save_users(users):
+    with open(USER_DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(users, f, ensure_ascii=False, indent=4)
 
 # --- AUTHENTICATION STATE HANDLING ---
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
-# --- LOGIN FORM INTERFACE ---
+# --- SIGN IN / SIGN UP INTERFACE ---
 if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown('<div class="css-card">', unsafe_allow_html=True)
-        st.title("🔐 UNME AI Social Media Login")
-        st.markdown("សូមបញ្ចូល Username និង Password ដើម្បីចូលប្រើប្រាស់ប្រព័ន្ធ (by Hab Rithy)")
+        st.title("🚀 UNME AI Social Media")
         
-        username_input = st.text_input("Username")
-        password_input = st.text_input("Password", type="password")
+        auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["🔑 ចូលប្រព័ន្ធ (Sign In)", "📝 ចុះឈ្មោះ (Sign Up)"], horizontal=True)
+        st.markdown("<br>", unsafe_allow_html=True)
         
-        if st.button("🔓 ចូលប្រព័ន្ធ (Login)", type="primary"):
-            if username_input in USER_DATABASE and USER_DATABASE[username_input]["password"] == password_input:
-                st.session_state["logged_in"] = True
-                st.session_state["user_info"] = USER_DATABASE[username_input]
-                st.success("ចូលប្រព័ន្ធជោគជ័យ!")
-                st.rerun()
-            else:
-                st.error("Username ឬ Password មិនត្រឹមត្រូវឡើយ!")
+        users_db = load_users()
+
+        if auth_mode == "🔑 ចូលប្រព័ន្ធ (Sign In)":
+            st.subheader("ចូលប្រព័ន្ធរបស់អ្នក")
+            signin_user = st.text_input("Username (ឈ្មោះគណនី)")
+            signin_pass = st.text_input("Password (ពាក្យសម្ងាត់)", type="password")
+            
+            if st.button("🔓 ចូលប្រព័ន្ធ (Sign In)", type="primary"):
+                if signin_user in users_db and users_db[signin_user]["password"] == signin_pass:
+                    st.session_state["logged_in"] = True
+                    st.session_state["user_info"] = users_db[signin_user]
+                    st.success("ចូលប្រព័ន្ធជោគជ័យ!")
+                    st.rerun()
+                else:
+                    st.error("Username ឬ Password មិនត្រឹមត្រូវឡើយ!")
+        
+        else:  # Sign Up Mode
+            st.subheader("បង្កើតគណនីថ្មី (Sign Up)")
+            signup_name = st.text_input("ชื่อពេញ / Full Name (ឈ្មោះបង្ហាញ)")
+            signup_user = st.text_input("Choose Username (ឈ្មោះគណនីថ្មី)")
+            signup_pass = st.text_input("Choose Password (ពាក្យសម្ងាត់ថ្មី)", type="password")
+            
+            if st.button("✨ ចុះឈ្មោះបង្កើតគណនី (Sign Up)", type="primary"):
+                if not signup_user or not signup_pass or not signup_name:
+                    st.warning("សូមបំពេញព័ត៌មានឱ្យបានគ្រប់គ្រាន់។")
+                elif signup_user in users_db:
+                    st.error("ឈ្មោះ Username នេះមានគេប្រើប្រាស់រួចហើយ សូមជ្រើសរើសឈ្មោះផ្សេង។")
+                else:
+                    # រក្សាទុកគណនីថ្មីជា Standard User
+                    users_db[signup_user] = {
+                        "password": signup_pass,
+                        "name": signup_name,
+                        "role": "user"
+                    }
+                    save_users(users_db)
+                    st.success("បង្កើតគណនីបានជោគជ័យ! សូមប្តូរទៅកាន់ផ្ទាំង Sign In ដើម្បីចូលប្រព័ន្ធ។")
+                    
         st.markdown('</div>', unsafe_allow_html=True)
-    st.stop()  # បញ្ឈប់កូដខាងក្រោមមិនឱ្យដំណើរការ រហូតទាល់តែ Login រួច
+    st.stop()
 
 # --- USER LOGGED IN DATA ---
 current_user = st.session_state["user_info"]
@@ -204,7 +249,7 @@ if 'scheduler_started' not in st.session_state:
     bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
     bg_thread.start()
 
-# --- SIDEBAR CONFIGURATION (ROLE-BASED PERMISSIONS) ---
+# --- SIDEBAR CONFIGURATION ---
 st.sidebar.title(f"👤 {current_user['name']}")
 st.sidebar.caption(f"Role: {current_user['role'].upper()}")
 
@@ -220,7 +265,6 @@ storage_mode = st.sidebar.selectbox(
     ["Local history.json", "Google Sheets"]
 )
 
-# ផ្ទៀងផ្ទាត់៖ លុះត្រាតែជា Admin ទើបអាចមើលឃើញ ឬកំណត់ API Settings ទាំងអស់ក្នុង Sidebar
 gsheet_json = ""
 gsheet_url = ""
 gemini_api_key = ""
@@ -230,7 +274,6 @@ ai_provider = "Google Gemini"
 if current_user["role"] == "admin":
     st.sidebar.title("⚙️ System Configuration (Admin Only)")
 
-    # 1. AI Provider Selection Expander
     with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
         ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
         if ai_provider == "Google Gemini":
@@ -242,44 +285,37 @@ if current_user["role"] == "admin":
             if openai_api_key:
                 openai.api_key = openai_api_key
 
-    # 2. Google Sheets Configuration Expander
     with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
         gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
         gsheet_url = st.text_input("Spreadsheet URL / ID")
 
-    # 3. Facebook Credentials Expander
     with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
         fb_page_id = st.text_input("Facebook Page ID")
         fb_access_token = st.text_input("Facebook Access Token / API", type="password")
 
-    # 4. TikTok Credentials Expander
     with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
         tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
 
-    # 5. YouTube Credentials Expander
     with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
         yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-    # 6. Telegram Notification Settings Expander
     with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
         tg_token = st.text_input("Telegram Bot Token", type="password")
         tg_chat_id = st.text_input("Telegram Chat ID")
 
-    # 7. Background Scheduler Settings Expander
     with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
         schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
         st.caption("មុខងារ Auto Scheduler កំពុងដំណើរការក្នុងប្រព័ន្ធផ្ទៃខាងក្រោយ។")
 else:
     st.sidebar.info("🔒 គណនីរបស់អ្នកជា Standard User។ ផ្នែកកំណត់ API ត្រូវបានរក្សាសុវត្ថិភាពដោយ Admin។")
 
-# --- ABOUT & HOW TO USE SECTION IN SIDEBAR ---
 st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស់", expanded=False):
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.3 Pro (Authentication Enabled)  
+    * **ជំនាន់ (Version):** 2.4 Pro (Sign Up / Sign In Enabled)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
@@ -574,7 +610,7 @@ with tab4:
                     st.markdown(bot_reply)
                     st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
                 except Exception as e:
-                    err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
+                    err_msg = f"មានបញ្ហាក្នុងการភ្ជាប់ AI Support៖ {e}"
                     st.error(err_msg)
                     st.session_state["support_messages"].append({"role": "assistant", "content": err_msg})
     st.markdown('</div>', unsafe_allow_html=True)
