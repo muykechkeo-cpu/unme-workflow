@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import streamlit as st
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -98,21 +99,29 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# --- EMAIL VALIDATION HELPER ---
+def is_valid_email(email):
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(pattern, email) is not None
+
 # --- USER DATABASE MANAGEMENT (JSON FILE STORAGE) ---
 USER_DB_FILE = "users.json"
 
 def load_users():
-    # កំណត់គណនី Admin កាតព្វកិច្ចស្រាប់ក្នុងប្រព័ន្ធ
+    # គណនី Admin គំរូដោយប្រើ Email
     default_users = {
-        "admin": {"password": "adminpassword", "name": "Hab Rithy (Admin)", "role": "admin"}
+        "admin@unme.com": {
+            "password": "adminpassword",
+            "name": "Hab Rithy (Admin)",
+            "role": "admin"
+        }
     }
     if os.path.exists(USER_DB_FILE):
         try:
             with open(USER_DB_FILE, "r", encoding="utf-8") as f:
                 users = json.load(f)
-                # ធានាថាមាន admin ជានិច្ច
-                if "admin" not in users:
-                    users["admin"] = default_users["admin"]
+                if "admin@unme.com" not in users:
+                    users["admin@unme.com"] = default_users["admin@unme.com"]
                 return users
         except:
             return default_users
@@ -127,7 +136,7 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
-# --- SIGN IN / SIGN UP INTERFACE ---
+# --- EMAIL-BASED SIGN IN / SIGN UP INTERFACE ---
 if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -142,38 +151,44 @@ if not st.session_state["logged_in"]:
 
         if auth_mode == "🔑 ចូលប្រព័ន្ធ (Sign In)":
             st.subheader("ចូលប្រព័ន្ធរបស់អ្នក")
-            signin_user = st.text_input("Username (ឈ្មោះគណនី)")
-            signin_pass = st.text_input("Password (ពាក្យសម្ងាត់)", type="password")
+            signin_email = st.text_input("អ៊ីមែល (Email Address)", placeholder="example@gmail.com").strip().lower()
+            signin_pass = st.text_input("ពាក្យសម្ងាត់ (Password)", type="password")
             
             if st.button("🔓 ចូលប្រព័ន្ធ (Sign In)", type="primary"):
-                if signin_user in users_db and users_db[signin_user]["password"] == signin_pass:
+                if not signin_email or not signin_pass:
+                    st.warning("សូមបញ្ចូលអ៊ីមែល និងពាក្យសម្ងាត់ឱ្យបានត្រឹមត្រូវ។")
+                elif signin_email in users_db and users_db[signin_email]["password"] == signin_pass:
                     st.session_state["logged_in"] = True
-                    st.session_state["user_info"] = users_db[signin_user]
+                    user_data = users_db[signin_email]
+                    user_data["email"] = signin_email
+                    st.session_state["user_info"] = user_data
                     st.success("ចូលប្រព័ន្ធជោគជ័យ!")
                     st.rerun()
                 else:
-                    st.error("Username ឬ Password មិនត្រឹមត្រូវឡើយ!")
+                    st.error("អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ!")
         
         else:  # Sign Up Mode
             st.subheader("បង្កើតគណនីថ្មី (Sign Up)")
-            signup_name = st.text_input("ឈ្មោះពេញ / Full Name (ឈ្មោះបង្ហាញ)")
-            signup_user = st.text_input("Choose Username (ឈ្មោះគណនីថ្មី)")
-            signup_pass = st.text_input("Choose Password (ពាក្យសម្ងាត់ថ្មី)", type="password")
+            signup_name = st.text_input("ឈ្មោះពេញ / Full Name")
+            signup_email = st.text_input("អាសយដ្ឋានអ៊ីមែល (Email Address)", placeholder="example@gmail.com").strip().lower()
+            signup_pass = st.text_input("បង្កើតពាក្យសម្ងាត់ (Choose Password)", type="password")
             
             if st.button("✨ ចុះឈ្មោះបង្កើតគណនី (Sign Up)", type="primary"):
-                if not signup_user or not signup_pass or not signup_name:
-                    st.warning("សូមបំពេញព័ត៌មានឱ្យបានគ្រប់គ្រាន់។")
-                elif signup_user in users_db:
-                    st.error("ឈ្មោះ Username នេះមានគេប្រើប្រាស់រួចហើយ សូមជ្រើសរើសឈ្មោះផ្សេង។")
+                if not signup_name or not signup_email or not signup_pass:
+                    st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យបានត្រឹមត្រូវ។")
+                elif not is_valid_email(signup_email):
+                    st.error("ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ! សូមពិនិត្យមើលឡើងវិញ (ឧទាហរណ៍៖ user@domain.com)។")
+                elif signup_email in users_db:
+                    st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ! សូមប្រើប្រាស់អ៊ីមែលផ្សេង ឬចុច Sign In។")
                 else:
-                    # រក្សាទុកគណនីថ្មីជា Standard User
-                    users_db[signup_user] = {
+                    # រក្សាទុកគណនីថ្មីក្នុង users.json (ជា Standard User)
+                    users_db[signup_email] = {
                         "password": signup_pass,
                         "name": signup_name,
                         "role": "user"
                     }
                     save_users(users_db)
-                    st.success("បង្កើតគណនីបានជោគជ័យ! សូមប្តូរទៅកាន់ផ្ទាំង Sign In ដើម្បីចូលប្រព័ន្ធ។")
+                    st.success("ចុះឈ្មោះបង្កើតគណនីបានជោគជ័យ! សូមប្តូរទៅកាន់ផ្ទាំង Sign In ដើម្បីចូលប្រព័ន្ធ។")
                     
         st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
@@ -251,6 +266,7 @@ if 'scheduler_started' not in st.session_state:
 
 # --- SIDEBAR CONFIGURATION ---
 st.sidebar.title(f"👤 {current_user['name']}")
+st.sidebar.caption(f"Email: {current_user['email']}")
 st.sidebar.caption(f"Role: {current_user['role'].upper()}")
 
 if st.sidebar.button("🚪 ចាកចេញពីប្រព័ន្ធ (Logout)"):
@@ -315,7 +331,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.4 Pro (Sign Up / Sign In Enabled)  
+    * **ជំនាន់ (Version):** 2.5 Pro (Email Authentication)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
@@ -454,7 +470,7 @@ with tab1:
             
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             history_entry = {
-                "user": current_user["name"],
+                "user": f"{current_user['name']} ({current_user['email']})",
                 "type": post_type, 
                 "file": media_file_path, 
                 "caption": final_caption, 
@@ -484,7 +500,7 @@ with tab1:
                     client = gspread.authorize(creds)
                     
                     sheet = client.open_by_url(gsheet_url).sheet1
-                    sheet.append_row([current_user["name"], post_type, media_file_path, final_caption, str(results), timestamp])
+                    sheet.append_row([f"{current_user['name']} ({current_user['email']})", post_type, media_file_path, final_caption, str(results), timestamp])
                     
                     st.success("✅ បានកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
                 except Exception as e:
@@ -610,7 +626,7 @@ with tab4:
                     st.markdown(bot_reply)
                     st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
                 except Exception as e:
-                    err_msg = f"មានបញ្ហាក្នុងการភ្ជាប់ AI Support៖ {e}"
+                    err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
                     st.error(err_msg)
                     st.session_state["support_messages"].append({"role": "assistant", "content": err_msg})
     st.markdown('</div>', unsafe_allow_html=True)
