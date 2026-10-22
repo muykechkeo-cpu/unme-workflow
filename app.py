@@ -43,8 +43,11 @@ st.markdown("""
             max-width: 98% !important;
         }
         
-        /* Force Main Area Text to WHITE */
-        .main p, .main span, .main label, .main div, .main .stMarkdown, .main .stRadio label, .main .stCheckbox label, .main .stCaption {
+        /* Force Main Area Text, Labels, Radio, Checkboxes, and Descriptions to WHITE */
+        .main p, .main span, .main label, .main div, .main .stMarkdown, 
+        .main .stRadio label, .main .stCheckbox label, .main .stCaption, 
+        .main [data-baseweb="radio"] div, .main [data-baseweb="checkbox"] div,
+        .main small, .main .stWidgetLabel {
             color: #ffffff !important;
         }
         
@@ -390,7 +393,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 4.8 Dark Neon Pro  
+    * **ជំនាន់ (Version):** 4.9 Dark Neon Pro  
     """)
 
 # --- TOP HEADER ---
@@ -658,7 +661,7 @@ with tab3:
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
-        st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
+        st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
