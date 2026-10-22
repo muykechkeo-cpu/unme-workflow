@@ -105,14 +105,12 @@ def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
         draw = ImageDraw.Draw(image)
         width, height = image.size
         
-        # កំណត់ទំហំអក្សរ Watermark តាមសមាមាត្ររូបភាព
         font_size = max(15, int(width / 25))
         try:
             font = ImageFont.truetype("arial.ttf", font_size)
         except:
             font = ImageFont.load_default()
             
-        # គណនាទីតាំងដាក់នៅมุมขวาล่าง (Bottom Right)
         text_bbox = draw.textbbox((0, 0), watermark_text, font=font)
         text_width = text_bbox[2] - text_bbox[0]
         text_height = text_bbox[3] - text_bbox[1]
@@ -121,7 +119,6 @@ def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
         x = width - text_width - margin
         y = height - text_height - margin
         
-        # ដាក់ខ្សល់ស្រមោល ឬផ្ទៃខាងក្រោយអក្សរឱ្យងាយមើល
         draw.text((x+2, y+2), watermark_text, font=font, fill=(0, 0, 0, 180))
         draw.text((x, y), watermark_text, font=font, fill=(255, 255, 255, 230))
         
@@ -146,7 +143,6 @@ def process_video_watermark(input_path, output_path, watermark_text="UNME AI"):
             if not ret:
                 break
             
-            # បន្ថែមអក្សរ Watermark លើស៊ុមវីដេអូនីមួយៗ
             org = (width - 250, height - 30)
             cv2.putText(frame, watermark_text, org, 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
@@ -230,7 +226,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.1 Pro (Watermark Enabled)  
+    * **ជំនាន់ (Version):** 2.2 Pro (Analytics & Watermark)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
@@ -242,11 +238,12 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- SEPARATE INTO MODERN TABS ---
-tab1, tab2, tab3 = st.tabs([
+# --- SEPARATE INTO 4 MODERN TABS ---
+tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
-    "💬 Support Chat & AI Assistant"
+    "💬 Support Chat & AI Assistant",
+    "📈 Analytics Dashboard"
 ])
 
 with tab1:
@@ -258,7 +255,6 @@ with tab1:
         horizontal=True
     )
 
-    # Watermark Settings Configuration
     enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
     watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
 
@@ -279,7 +275,7 @@ with tab1:
             else:
                 media_file_path = raw_path
                 st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
-    else:  # Picture / Photo Posts
+    else:
         uploaded_image = st.file_uploader("ជ្រើសរើសរូបភាពសម្រាប់ផុស (.jpg, .jpeg, .png)", type=["jpg", "jpeg", "png"])
         if uploaded_image is not None:
             raw_path = os.path.join(".", "raw_" + uploaded_image.name)
@@ -317,7 +313,7 @@ with tab1:
                     st.error(f"មានកំហុសក្នុងការតភ្ជាប់ Gemini AI៖ {e}")
             else:
                 st.warning("សូមបញ្ចូល Google Gemini API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន។")
-        else:  # OpenAI ChatGPT
+        else:
             if 'openai_api_key' in locals() and openai_api_key:
                 try:
                     client = openai.OpenAI(api_key=openai_api_key)
@@ -437,7 +433,7 @@ with tab2:
                 else:
                     st.info("Google Sheet របស់អ្នកនៅទទេ។")
             except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងการទាញយកទិន្នន័យពី Google Sheets៖ {e}")
+                st.error(f"មានបញ្ហាក្នុងការទាញយកទិន្នន័យពី Google Sheets៖ {e}")
         else:
             st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -477,4 +473,44 @@ with tab3:
                     err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
                     st.error(err_msg)
                     st.session_state["support_messages"].append({"role": "assistant", "content": err_msg})
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with tab4:
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.subheader("📊 Analytics & Performance Dashboard")
+    st.markdown("ផ្ទាំងបង្ហាញស្ថិតិ និងការវិភាគទូទៅនៃការបញ្ជូនមាតិកាទៅកាន់ Social Media Platforms។")
+
+    if os.path.exists("history.json"):
+        try:
+            with open("history.json", "r", encoding="utf-8") as f:
+                hist_data = json.load(f)
+            
+            total_posts = len(hist_data)
+            fb_count = sum(1 for item in hist_data if any("Facebook" in str(r)) for r in item.get("results", []))
+            tiktok_count = sum(1 for item in hist_data if any("TikTok" in str(r)) for r in item.get("results", []))
+            yt_count = sum(1 for item in hist_data if any("YouTube" in str(r)) for r in item.get("results", []))
+
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("📌 ការផុសសរុប (Total Posts)", total_posts)
+            m2.metric("📘 Facebook Posts", fb_count)
+            m3.metric("🎵 TikTok Posts", tiktok_count)
+            m4.metric("📺 YouTube Posts", yt_count)
+
+            st.markdown("---")
+            st.subheader("📈 ប្រវត្តិនៃការប្រើប្រាស់តាមវេទិកា")
+            
+            if total_posts > 0:
+                st.bar_chart({
+                    "Facebook": fb_count,
+                    "TikTok": tiktok_count,
+                    "YouTube": yt_count
+                })
+            else:
+                st.info("មិនទាន់មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់បង្ហាញជាក្រាហ្វិក (Chart) ទេ។")
+
+        except Exception as e:
+            st.error(f"មានបញ្ហាក្នុងការអានទិន្នន័យសម្រាប់ Analytics៖ {e}")
+    else:
+        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារ (history.json) នៅឡើយទេ។ សូមធ្វើការ Upload មាតិកាសិន។")
+
     st.markdown('</div>', unsafe_allow_html=True)
