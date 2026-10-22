@@ -439,7 +439,7 @@ st.markdown("""
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -693,4 +693,32 @@ with tab4:
 
     if "support_messages" not in st.session_state:
         st.session_state["support_messages"] = [
-            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant របស់>)`](support_messages)
+            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant របស់ UNME (by Hab Rithy)។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
+        ]
+
+    for msg in st.session_state["support_messages"]:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីនេះ..."):
+        st.session_state["support_messages"].append({"role": "user", "content": user_query})
+        with st.chat_message("user"):
+            st.markdown(user_query)
+
+        with st.chat_message("assistant"):
+            with st.spinner("កំពុងពិចារណា..."):
+                try:
+                    if 'gemini_api_key' in locals() and gemini_api_key:
+                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media built by Hab Rithy'. Answer the user's question professionally: {user_query}")
+                        bot_reply = chat_response.text
+                    else:
+                        bot_reply = "សូមបញ្ចូល Google Gemini API Key នៅផ្នែក Sidebar ខាងឆ្វេងជាមុនសិន ដើម្បីឱ្យ Support AI អាចដំណើរការឆ្លើយតបបាន។"
+                    
+                    st.markdown(bot_reply)
+                    st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
+                except Exception as e:
+                    err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
+                    st.error(err_msg)
+                    st.session_state["support_messages"].append({"role": "assistant", "content": err_msg})
+    st.markdown('</div>', unsafe_allow_html=True)
