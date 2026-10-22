@@ -20,22 +20,30 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CUSTOM CSS FOR STICKY HEADER & REDUCED PADDING ---
+# --- CUSTOM CSS FOR FIXED NON-MOVING STICKY HEADER ---
 st.markdown("""
     <style>
-        /* កាត់បន្ថយគម្លាតផ្នែកខាងលើរបស់ Streamlit ឱ្យឡើងលើបន្តិច */
+        /* កាត់បន្ថយគម្លាតផ្នែកខាងលើរបស់ Streamlit */
         .block-container {
-            padding-top: 1.5rem !important;
+            padding-top: 1rem !important;
         }
-        /* ធ្វើឱ្យចំណងជើងหลักនៅនឹងថ្កល់ពេល Scroll */
+        /* ធ្វើឱ្យចំណងជើងនៅនឹងថ្កល់ដាច់ខាតពេល Scroll ដោយមិនរំកិលចេញ */
         .sticky-header {
             position: sticky;
-            top: 0;
-            background-color: var(--background-color, #ffffff);
-            z-index: 999;
-            padding-top: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(150, 150, 150, 0.2);
+            top: 0px;
+            background-color: #ffffff;
+            z-index: 99999;
+            padding-top: 8px;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f0f2f6;
+        }
+        /* សម្រាប់ Dark Mode របស់ Streamlit */
+        @media (prefers-color-scheme: dark) {
+            .sticky-header {
+                background-color: #0e1117;
+                border-bottom: 2px solid #262730;
+            }
         }
     </style>
 """, unsafe_allow_html=True)
@@ -128,11 +136,11 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
        - គ្រូសធីកលើវេទិកាដែលចង់ផុស ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
     """)
 
-# --- MAIN INTERFACE (STICKY HEADER) ---
+# --- MAIN INTERFACE (FIXED NON-MOVING STICKY HEADER) ---
 st.markdown("""
     <div class="sticky-header">
-        <h1>🚀 UNME AI Social Media</h1>
-        <p style="margin:0; color: gray;">ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube</p>
+        <h1 style="margin:0; font-size: 28px;">🚀 UNME AI Social Media</h1>
+        <p style="margin:0; color: gray; font-size: 14px;">ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube</p>
     </div>
 """, unsafe_allow_html=True)
 
