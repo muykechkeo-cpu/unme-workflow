@@ -20,14 +20,15 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CUSTOM CSS FOR FIXED NON-MOVING STICKY HEADER ---
+# --- CUSTOM CSS FOR FIXED NON-MOVING LAYOUT & STICKY HEADER ---
 st.markdown("""
     <style>
         /* កាត់បន្ថយគម្លាតផ្នែកខាងលើរបស់ Streamlit */
         .block-container {
             padding-top: 1rem !important;
+            padding-bottom: 2rem !important;
         }
-        /* ធ្វើឱ្យចំណងជើងនៅនឹងថ្កល់ដាច់ខាតពេល Scroll ដោយមិនរំកិលចេញ */
+        /* ធ្វើឱ្យចំណងជើងនៅនឹងថ្កល់ដាច់ខាតពេល Scroll */
         .sticky-header {
             position: sticky;
             top: 0px;
@@ -44,6 +45,10 @@ st.markdown("""
                 background-color: #0e1117;
                 border-bottom: 2px solid #262730;
             }
+        }
+        /* ជួសជុលកុំឱ្យ Column ទាំងសងខាងរត់ ឬញាក់ប៉ះពាល់គ្នាពេល Scroll */
+        div[data-testid="column"] {
+            overflow-y: visible;
         }
     </style>
 """, unsafe_allow_html=True)
