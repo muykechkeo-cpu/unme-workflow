@@ -9,6 +9,8 @@ from google.oauth2.service_account import Credentials
 import datetime
 import time
 import threading
+import cv2
+from PIL import Image, ImageDraw, ImageFont
 from multi_platform import upload_to_youtube, upload_to_tiktok, upload_to_facebook
 
 # Load environment variables
@@ -23,14 +25,11 @@ st.set_page_config(
 # --- MODERN ADVANCED CUSTOM CSS FOR UI STYLING ---
 st.markdown("""
     <style>
-        /* 1. Global Page Layout & Spacing */
         .block-container {
             padding-top: 1.2rem !important;
             padding-bottom: 2.5rem !important;
             max-width: 95% !important;
         }
-
-        /* 2. Fixed Sticky Top Header with Glassmorphism Effect */
         .sticky-header {
             position: sticky;
             top: 0px;
@@ -43,8 +42,6 @@ st.markdown("""
             border-radius: 0 0 12px 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
-
-        /* 3. Modern Card Containers */
         .css-card {
             background-color: #ffffff;
             padding: 20px;
@@ -53,8 +50,6 @@ st.markdown("""
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
             margin-bottom: 20px;
         }
-
-        /* 4. Tab Styling Enhancements */
         .stTabs [data-baseweb="tab-list"] {
             gap: 12px;
         }
@@ -73,8 +68,6 @@ st.markdown("""
             border-color: #2563eb !important;
             box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
         }
-
-        /* 5. Custom Primary Buttons Styling */
         div.stButton > button {
             width: 100%;
             border-radius: 10px;
@@ -82,8 +75,6 @@ st.markdown("""
             padding: 10px 20px;
             transition: all 0.3s ease;
         }
-
-        /* 6. Dark Mode Customizations */
         @media (prefers-color-scheme: dark) {
             .sticky-header {
                 background: rgba(14, 17, 23, 0.95);
@@ -106,6 +97,68 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
+
+# --- MEDIA PROCESSING FUNCTIONS (WATERMARK & EDITING) ---
+def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
+    try:
+        image = Image.open(input_path).convert("RGBA")
+        draw = ImageDraw.Draw(image)
+        width, height = image.size
+        
+        # កំណត់ទំហំអក្សរ Watermark តាមសមាមាត្ររូបភាព
+        font_size = max(15, int(width / 25))
+        try:
+            font = ImageFont.truetype("arial.ttf", font_size)
+        except:
+            font = ImageFont.load_default()
+            
+        # គណនាទីតាំងដាក់នៅมุมขวาล่าง (Bottom Right)
+        text_bbox = draw.textbbox((0, 0), watermark_text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        
+        margin = 20
+        x = width - text_width - margin
+        y = height - text_height - margin
+        
+        # ដាក់ខ្សល់ស្រមោល ឬផ្ទៃខាងក្រោយអក្សរឱ្យងាយមើល
+        draw.text((x+2, y+2), watermark_text, font=font, fill=(0, 0, 0, 180))
+        draw.text((x, y), watermark_text, font=font, fill=(255, 255, 255, 230))
+        
+        rgb_image = image.convert("RGB")
+        rgb_image.save(output_path, "JPEG", quality=95)
+        return output_path
+    except Exception as e:
+        print(f"Error processing image watermark: {e}")
+        return input_path
+
+def process_video_watermark(input_path, output_path, watermark_text="UNME AI"):
+    try:
+        cap = cv2.VideoCapture(input_path)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+            
+            # បន្ថែមអក្សរ Watermark លើស៊ុមវីដេអូនីមួយៗ
+            org = (width - 250, height - 30)
+            cv2.putText(frame, watermark_text, org, 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
+            
+            out.write(frame)
+
+        cap.release()
+        out.release()
+        return output_path
+    except Exception as e:
+        print(f"Error processing video watermark: {e}")
+        return input_path
 
 # --- BACKGROUND SCHEDULER FUNCTION ---
 def run_scheduled_jobs():
@@ -177,22 +230,8 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.0 Pro (UI Enhanced)  
-    * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube ។  
-
-    ---
-
-    ### 📖 របៀបប្រើប្រាស់ (How to Use)
-    1. **កំណត់ការតភ្ជាប់ (Sidebar):** 
-       - បញ្ចូល API Key របស់ Google Gemini ឬ OpenAI ។
-       - បំពេញ **Facebook Page ID & Access Token** សម្រាប់ផុសចូល Facebook ។
-       - បំពេញ Google Sheets JSON Key (បើចង់រក្សាទុកប្រវត្តិលើ Cloud)។
-    2. **ជ្រើសរើសប្រភេទផុស (Post Type):** 
-       - ជ្រើសរើសរវាង **Video / Reels** ឬ **Picture / Photo Posts** រួច Upload ឯកសារផ្ទាល់។
-    3. **បង្កើត Caption ដោយ AI:** 
-       - សរសេរ Prompt រួចចុចប៊ូតុងបង្កើត Caption និងកែសម្រួលតាមតម្រូវការ។
-    4. **ជ្រើសរើស Platform & Upload:** 
-       - គ្រូសធីកលើវេទិកាដែលចង់ផុស ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
+    * **ជំនាន់ (Version):** 2.1 Pro (Watermark Enabled)  
+    * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
 # --- MAIN INTERFACE (FIXED STICKY HEADER) ---
@@ -212,7 +251,6 @@ tab1, tab2, tab3 = st.tabs([
 
 with tab1:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    # 1. Post Type & Media Input Section
     st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
     post_type = st.radio(
         "តើអ្នកចង់ផុសមាតិកាប្រភេទណា?", 
@@ -220,26 +258,45 @@ with tab1:
         horizontal=True
     )
 
+    # Watermark Settings Configuration
+    enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
+    watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
+
     media_file_path = None
 
     if post_type == "🎥 Video / Reels":
         uploaded_file = st.file_uploader("ជ្រើសរើសឯកសារវីដេអូផ្ទាល់ (.mp4, .mov, .avi)", type=["mp4", "mov", "avi"])
         if uploaded_file is not None:
-            media_file_path = os.path.join(".", uploaded_file.name)
-            with open(media_file_path, "wb") as f:
+            raw_path = os.path.join(".", "raw_" + uploaded_file.name)
+            with open(raw_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-            st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
+            
+            if enable_watermark:
+                st.info("កំពុងច្នៃប្រឌិត និងដាក់ Watermark លើវីដេអូ...")
+                media_file_path = os.path.join(".", "wm_" + uploaded_file.name)
+                process_video_watermark(raw_path, media_file_path, watermark_text)
+                st.success(f"បានដាក់ Watermark លើវីដេអូជោគជ័យ៖ {uploaded_file.name}")
+            else:
+                media_file_path = raw_path
+                st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
     else:  # Picture / Photo Posts
         uploaded_image = st.file_uploader("ជ្រើសរើសរូបភាពសម្រាប់ផុស (.jpg, .jpeg, .png)", type=["jpg", "jpeg", "png"])
         if uploaded_image is not None:
-            media_file_path = os.path.join(".", uploaded_image.name)
-            with open(media_file_path, "wb") as f:
+            raw_path = os.path.join(".", "raw_" + uploaded_image.name)
+            with open(raw_path, "wb") as f:
                 f.write(uploaded_image.getbuffer())
-            st.success(f"បានផ្ទុកឡើងរូបភាព៖ {uploaded_image.name}")
+                
+            if enable_watermark:
+                st.info("កំពុងច្នៃប្រឌិត និងដាក់ Watermark លើរូបភាព...")
+                media_file_path = os.path.join(".", "wm_" + uploaded_image.name)
+                process_image_watermark(raw_path, media_file_path, watermark_text)
+                st.success(f"បានដាក់ Watermark លើរូបភាពជោគជ័យ៖ {uploaded_image.name}")
+            else:
+                media_file_path = raw_path
+                st.success(f"បានផ្ទុកឡើងរូបភាព៖ {uploaded_image.name}")
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    # 2. AI Caption Customization & Generation
     st.subheader(f"🤖 ការកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
     caption_prompt = st.text_area(
         "សរសេរពាក្យបញ្ជា ឬស្ទីលដែលចង់បានឱ្យ AI បង្កើត៖",
@@ -280,7 +337,6 @@ with tab1:
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    # 3. Multi-Platform Selection
     st.subheader("🎬 ជ្រើសរើសវេទិកាសម្រាប់ការបញ្ជូន (Multi-Platform Selection)")
     col_a, col_b, col_c = st.columns(3)
     with col_a:
@@ -292,7 +348,6 @@ with tab1:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 4. Execution Button
     if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload ទៅកាន់ Platform", type="primary"):
         if media_file_path and os.path.exists(media_file_path):
             st.info("ប្រព័ន្ធកំពុងដំណើរការបញ្ជូនមាតិកា...")
@@ -311,11 +366,9 @@ with tab1:
             st.success("ការបញ្ជូនបានបញ្ចប់!")
             st.json(results)
             
-            # --- STORAGE HANDLING (Dual Save: Local & Google Sheets) ---
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             history_entry = {"type": post_type, "file": media_file_path, "caption": final_caption, "results": results, "time": timestamp}
             
-            # 1. Save to Local history.json
             try:
                 if os.path.exists("history.json"):
                     with open("history.json", "r", encoding="utf-8") as f:
@@ -330,7 +383,6 @@ with tab1:
             except Exception as e:
                 st.error(f"មានបញ្ហាក្នុងការរក្សាទុក Local history.json៖ {e}")
                 
-            # 2. Save to Google Sheets
             if gsheet_json and gsheet_url:
                 try:
                     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -350,7 +402,6 @@ with tab1:
 
 with tab2:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    # --- VIEW HISTORY TABLE SECTION ---
     st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យប្រវត្តិការងារឡើងវិញ"):
@@ -386,14 +437,13 @@ with tab2:
                 else:
                     st.info("Google Sheet របស់អ្នកនៅទទេ។")
             except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងការទាញយកទិន្នន័យពី Google Sheets៖ {e}")
+                st.error(f"មានបញ្ហាក្នុងการទាញយកទិន្នន័យពី Google Sheets៖ {e}")
         else:
             st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tab3:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    # --- SUPPORT CHAT & AI ASSISTANT TAB ---
     st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support Chat & AI Assistant)")
     st.markdown("សួរសំណួរ ឬពិភាក្សាជាមួយ AI Support អំពីបញ្ហាបច្ចេកទេស ការប្រើប្រាស់ API ឬគន្លឹះផ្សេងៗក្នុងប្រព័ន្ធ **UNME AI Social Media**។")
 
@@ -402,18 +452,15 @@ with tab3:
             {"role": "assistant", "content": "សួស្ដី! ខ្ញុំជា Support AI Assistant របស់ UNME (by Hab Rithy)។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
         ]
 
-    # បង្ហាញប្រវត្តិសារជជែក
     for msg in st.session_state["support_messages"]:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    # ប្រអប់វាយអត្ថបទសម្រាប់សួរសំណួរ Support
     if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីនេះ..."):
         st.session_state["support_messages"].append({"role": "user", "content": user_query})
         with st.chat_message("user"):
             st.markdown(user_query)
 
-        # ឆ្លើយតបដោយប្រើ AI Assistant (Gemini)
         with st.chat_message("assistant"):
             with st.spinner("កំពុងពិចារណា..."):
                 try:
