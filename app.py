@@ -23,7 +23,7 @@ if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 st.set_page_config(
-    page_title="WPOS Social Media - Soft UI Pro",
+    page_title="UNME AI Social Media - Soft UI Pro",
     page_icon="🚀",
     layout="wide"
 )
@@ -71,7 +71,7 @@ st.markdown("""
             color: #000000 !important;
         }
 
-        /* Neumorphic Auth Card (Matching Reference Image) */
+        /* Neumorphic Auth Card */
         .auth-box {
             background: #ffffff;
             padding: 40px;
@@ -124,7 +124,7 @@ st.markdown("""
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
         }
 
-        /* Gradient Buttons Styling (Matching Reference Image) */
+        /* Gradient Buttons Styling */
         div.stButton > button {
             width: 100%;
             border-radius: 16px;
@@ -154,9 +154,9 @@ USER_DB_FILE = "users.json"
 
 def load_users():
     default_users = {
-        "admin@wpos.com": {
+        "admin@unme.com": {
             "password": "adminpassword",
-            "name": "Peace Wang",
+            "name": "Hab Rithy",
             "role": "admin"
         }
     }
@@ -164,8 +164,8 @@ def load_users():
         try:
             with open(USER_DB_FILE, "r", encoding="utf-8") as f:
                 users = json.load(f)
-                if "admin@wpos.com" not in users:
-                    users["admin@wpos.com"] = default_users["admin@wpos.com"]
+                if "admin@unme.com" not in users:
+                    users["admin@unme.com"] = default_users["admin@unme.com"]
                 return users
         except:
             return default_users
@@ -190,14 +190,14 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
-# --- AUTH INTERFACE (Matching Neumorphic Reference Style) ---
+# --- AUTH INTERFACE ---
 if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown('<div class="auth-box">', unsafe_allow_html=True)
         st.markdown("<h2 style='text-align: center; color: #1e293b; font-weight: 700; margin-bottom: 5px;'>Sign Up</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b; font-size: 13px; margin-bottom: 25px;'>WPOS Social Media Management</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748b; font-size: 13px; margin-bottom: 25px;'>UNME AI Social Media Management</p>", unsafe_allow_html=True)
         
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["📝 Sign Up", "🔑 Sign In"], horizontal=True)
         st.markdown("<br>", unsafe_allow_html=True)
@@ -260,7 +260,7 @@ if not st.session_state["logged_in"]:
 current_user = st.session_state["user_info"]
 
 # --- MEDIA PROCESSING FUNCTIONS ---
-def process_image_watermark(input_path, output_path, watermark_text="WPOS AI"):
+def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
     try:
         image = Image.open(input_path).convert("RGBA")
         draw = ImageDraw.Draw(image)
@@ -290,7 +290,7 @@ def process_image_watermark(input_path, output_path, watermark_text="WPOS AI"):
         print(f"Error processing image watermark: {e}")
         return input_path
 
-def process_video_watermark(input_path, output_path, watermark_text="WPOS AI"):
+def process_video_watermark(input_path, output_path, watermark_text="UNME AI"):
     try:
         cap = cv2.VideoCapture(input_path)
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -365,14 +365,14 @@ st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស់", expanded=False):
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
-    **WPOS Social Media**  
-    * **ជំនាន់ (Version):** 5.1 Soft UI Pro  
+    **UNME AI Social Media**  
+    * **ជំនាន់ (Version):** 5.3 Soft UI Pro  
     """)
 
 # --- TOP HEADER ---
 st.markdown("""
     <div style="background: #ffffff; padding: 20px 24px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
-        <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #2563eb;">WPOS Dashboard</h1>
+        <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #2563eb;">UNME AI Social Media Dashboard</h1>
         <p style="margin:4px 0 0 0; color: #64748b; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube</p>
     </div>
 """, unsafe_allow_html=True)
@@ -419,7 +419,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
+    "📊 ប្រវត្តិការងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -434,7 +434,7 @@ with tab1:
     )
 
     enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
-    watermark_text = st.text_input("អត្ថបទ Watermark", value="WPOS AI")
+    watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
     media_file_path = None
 
     if post_type == "🎥 Video / Reels":
@@ -612,13 +612,13 @@ with tab2:
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
-        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារនៅឡើយទេ។")
+        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិการងារនៅឡើយទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 3: VIEW HISTORY ---
 with tab3:
     st.markdown('<div class="clean-card">', unsafe_allow_html=True)
-    st.subheader("📊 ពិនិត្យប្រវត្តិการងារ (View History)")
+    st.subheader("📊 ប្រវត្តិការងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
         st.rerun()
@@ -634,7 +634,7 @@ with tab3:
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
-        st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
+        st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
@@ -651,7 +651,7 @@ with tab4:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីนี่..."):
+    if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីនេះ..."):
         st.session_state["support_messages"].append({"role": "user", "content": user_query})
         with st.chat_message("user"):
             st.markdown(user_query)
@@ -661,7 +661,7 @@ with tab4:
                 try:
                     if GEMINI_API_KEY:
                         model = genai.GenerativeModel('gemini-1.5-flash')
-                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'WPOS Social Media'. Answer professionally: {user_query}")
+                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media'. Answer professionally: {user_query}")
                         bot_reply = chat_response.text
                     else:
                         bot_reply = "សូមកំណត់ GEMINI_API_KEY ជាមុនសិន។"
