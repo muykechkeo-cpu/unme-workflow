@@ -23,17 +23,17 @@ if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 st.set_page_config(
-    page_title="UNME AI Social Media - Light Pro UI",
+    page_title="WPOS Social Media - Soft UI Pro",
     page_icon="🚀",
     layout="wide"
 )
 
-# --- LIGHT CLEAN PRO CUSTOM CSS & HTML STYLING ---
+# --- NEUMORPHIC SOFT UI CUSTOM CSS & HTML STYLING ---
 st.markdown("""
     <style>
-        /* Global Light Clean Theme Background */
+        /* Global Soft Gradient Background */
         .stApp {
-            background-color: #f8fafc;
+            background: linear-gradient(135deg, #fce7f3 0%, #e0f2fe 100%);
             color: #1e293b;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
@@ -71,79 +71,75 @@ st.markdown("""
             color: #000000 !important;
         }
 
-        /* Clean White Cards */
+        /* Neumorphic Auth Card (Matching Reference Image) */
+        .auth-box {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f1f5f9;
+        }
+
+        /* Soft Cards */
         .clean-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
             margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-        .clean-card:hover {
-            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.08);
-            border-color: #cbd5e1;
         }
 
         /* Stat Cards */
         .stat-card-1 {
-            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+            background: #ffffff;
             padding: 20px;
-            border-radius: 16px;
+            border-radius: 20px;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
             color: #1e293b;
         }
 
         /* Tabs Styling */
         .stTabs [data-baseweb="tab-list"] {
             gap: 12px;
-            background-color: #f1f5f9;
+            background-color: #ffffff;
             padding: 8px;
-            border-radius: 14px;
+            border-radius: 16px;
             border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
         }
         .stTabs [data-baseweb="tab"] {
             height: 48px;
             padding: 0px 24px;
             background-color: transparent;
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: 600;
             color: #64748b;
             border: none;
         }
         .stTabs [aria-selected="true"] {
-            background: #2563eb !important;
+            background: linear-gradient(135deg, #f43f5e 0%, #3b82f6 100%) !important;
             color: #ffffff !important;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
         }
 
-        /* Buttons Styling */
+        /* Gradient Buttons Styling (Matching Reference Image) */
         div.stButton > button {
             width: 100%;
-            border-radius: 10px;
+            border-radius: 16px;
             font-weight: 600;
-            padding: 10px 24px;
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #f43f5e 0%, #3b82f6 100%);
             color: white;
             border: none;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
             transition: all 0.3s ease;
         }
         div.stButton > button:hover {
-            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+            opacity: 0.95;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
             transform: translateY(-1px);
-        }
-
-        /* Auth Container Styling */
-        .auth-box {
-            background: #ffffff;
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid #cbd5e1;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -158,9 +154,9 @@ USER_DB_FILE = "users.json"
 
 def load_users():
     default_users = {
-        "admin@unme.com": {
+        "admin@wpos.com": {
             "password": "adminpassword",
-            "name": "Administrator",
+            "name": "Peace Wang",
             "role": "admin"
         }
     }
@@ -168,8 +164,8 @@ def load_users():
         try:
             with open(USER_DB_FILE, "r", encoding="utf-8") as f:
                 users = json.load(f)
-                if "admin@unme.com" not in users:
-                    users["admin@unme.com"] = default_users["admin@unme.com"]
+                if "admin@wpos.com" not in users:
+                    users["admin@wpos.com"] = default_users["admin@wpos.com"]
                 return users
         except:
             return default_users
@@ -194,26 +190,26 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
-# --- AUTH INTERFACE ---
+# --- AUTH INTERFACE (Matching Neumorphic Reference Style) ---
 if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown('<div class="auth-box">', unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center; color: #2563eb; margin-bottom: 10px;'>🚀 WPOS AI Social Media</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #1e293b; font-weight: 700; margin-bottom: 5px;'>Sign Up</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748b; font-size: 13px; margin-bottom: 25px;'>WPOS Social Media Management</p>", unsafe_allow_html=True)
         
-        auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["🔑 ចូលប្រព័ន្ធ (Sign In)", "📝 ចុះឈ្មោះ (Sign Up)"], horizontal=True)
+        auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["📝 Sign Up", "🔑 Sign In"], horizontal=True)
         st.markdown("<br>", unsafe_allow_html=True)
         
         users_db = load_users()
 
-        if auth_mode == "🔑 ចូលប្រព័ន្ធ (Sign In)":
-            signin_email = st.text_input("អ៊ីមែល (Email Address)", placeholder="example@gmail.com").strip().lower()
-            signin_pass = st.text_input("ពាក្យសម្ងាត់ (Password)", type="password")
+        if auth_mode == "🔑 Sign In":
+            signin_email = st.text_input("Email address", placeholder="example@gmail.com").strip().lower()
+            signin_pass = st.text_input("Password", type="password")
             st.markdown("<br>", unsafe_allow_html=True)
             
-            if st.button("🔓 ចូលប្រព័ន្ធ (Sign In)", type="primary"):
+            if st.button("Sign In", type="primary"):
                 if not signin_email or not signin_pass:
                     st.warning("សូមបញ្ចូលអ៊ីមែល និងពាក្យសម្ងាត់ឱ្យបានត្រឹមត្រូវ។")
                 elif signin_email in users_db and users_db[signin_email]["password"] == signin_pass:
@@ -227,12 +223,12 @@ if not st.session_state["logged_in"]:
                     st.error("អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ!")
         
         else:  
-            signup_name = st.text_input("ឈ្មោះពេញ / Full Name", key="su_name")
-            signup_email = st.text_input("អាសយដ្ឋានអ៊ីមែល (Email Address)", placeholder="example@gmail.com", key="su_email").strip().lower()
-            signup_pass = st.text_input("បង្កើតពាក្យសម្ងាត់ (Choose Password)", type="password", key="su_pass")
+            signup_name = st.text_input("Full name", key="su_name")
+            signup_email = st.text_input("Email address", placeholder="example@gmail.com", key="su_email").strip().lower()
+            signup_pass = st.text_input("Password", type="password", key="su_pass")
             st.markdown("<br>", unsafe_allow_html=True)
             
-            if st.button("✨ ចុះឈ្មោះ និងចូលប្រព័ន្ធភ្លាមៗ", type="primary"):
+            if st.button("Create account", type="primary"):
                 if not signup_name or not signup_email or not signup_pass:
                     st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យបានត្រឹមត្រូវ។")
                 elif not is_valid_email(signup_email):
@@ -264,7 +260,7 @@ if not st.session_state["logged_in"]:
 current_user = st.session_state["user_info"]
 
 # --- MEDIA PROCESSING FUNCTIONS ---
-def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
+def process_image_watermark(input_path, output_path, watermark_text="WPOS AI"):
     try:
         image = Image.open(input_path).convert("RGBA")
         draw = ImageDraw.Draw(image)
@@ -294,7 +290,7 @@ def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
         print(f"Error processing image watermark: {e}")
         return input_path
 
-def process_video_watermark(input_path, output_path, watermark_text="UNME AI"):
+def process_video_watermark(input_path, output_path, watermark_text="WPOS AI"):
     try:
         cap = cv2.VideoCapture(input_path)
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -325,7 +321,7 @@ def process_video_watermark(input_path, output_path, watermark_text="UNME AI"):
 st.sidebar.title(f"👤 {current_user['name']}")
 st.sidebar.caption(f"Email: {current_user['email']}")
 
-if st.sidebar.button("🚪 ចាកចេញពីប្រព័ន្ធ (Logout)"):
+if st.sidebar.button("🚪 Log out"):
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
     st.rerun()
@@ -370,12 +366,12 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **WPOS Social Media**  
-    * **ជំនាន់ (Version):** 5.0 Clean Light Pro  
+    * **ជំនាន់ (Version):** 5.1 Soft UI Pro  
     """)
 
 # --- TOP HEADER ---
 st.markdown("""
-    <div style="background: #ffffff; padding: 20px 24px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+    <div style="background: #ffffff; padding: 20px 24px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
         <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #2563eb;">WPOS Dashboard</h1>
         <p style="margin:4px 0 0 0; color: #64748b; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube</p>
     </div>
@@ -655,7 +651,7 @@ with tab4:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីនេះ..."):
+    if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីนี่..."):
         st.session_state["support_messages"].append({"role": "user", "content": user_query})
         with st.chat_message("user"):
             st.markdown(user_query)
