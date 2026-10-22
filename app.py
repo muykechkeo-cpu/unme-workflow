@@ -51,8 +51,6 @@ st.markdown("""
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
             margin-bottom: 20px;
         }
-
-        /* 🎨 Background ពណ៌ប្រផេះ សម្រាប់ប្រអប់ Sign In / Sign Up */
         .auth-card-gray {
             background: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
             padding: 35px;
@@ -61,7 +59,6 @@ st.markdown("""
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
             margin-top: 15px;
         }
-
         .stTabs [data-baseweb="tab-list"] {
             gap: 12px;
         }
@@ -87,7 +84,6 @@ st.markdown("""
             padding: 10px 20px;
             transition: all 0.3s ease;
         }
-        
         @media (prefers-color-scheme: dark) {
             .sticky-header {
                 background: rgba(14, 17, 23, 0.95);
@@ -116,12 +112,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- EMAIL VALIDATION HELPER ---
 def is_valid_email(email):
     pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     return re.match(pattern, email) is not None
 
-# --- USER DATABASE MANAGEMENT (JSON FILE STORAGE) ---
 USER_DB_FILE = "users.json"
 
 def load_users():
@@ -147,17 +141,14 @@ def save_users(users):
     with open(USER_DB_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=4)
 
-# --- AUTHENTICATION STATE HANDLING ---
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
-# --- EMAIL-BASED SIGN IN / SIGN UP INTERFACE (WITH GRAY BACKGROUND) ---
 if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        # បន្ថែម class="auth-card-gray" ដើម្បីបង្កើត Background ពណ៌ប្រផេះ
         st.markdown('<div class="auth-card-gray">', unsafe_allow_html=True)
         st.title("🚀 UNME AI Social Media")
         
@@ -190,9 +181,9 @@ if not st.session_state["logged_in"]:
             signup_email = st.text_input("អាសយដ្ឋានអ៊ីមែល (Email Address)", placeholder="example@gmail.com").strip().lower()
             signup_pass = st.text_input("បង្កើតពាក្យសម្ងាត់ (Choose Password)", type="password")
             
-            if st.button("✨ ចុះឈ្មោះបង្កើតគណនី (Sign Up)", type="primary"):
+            if st.button("✨ ចុះឈ្មោះ និងចូលប្រព័ន្ធ (Sign Up)", type="primary"):
                 if not signup_name or not signup_email or not signup_pass:
-                    st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យបានត្រឹមត្រូវ។")
+                    st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យได้ត្រឹមត្រូវ។")
                 elif not is_valid_email(signup_email):
                     st.error("ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ!")
                 elif signup_email in users_db:
@@ -204,15 +195,23 @@ if not st.session_state["logged_in"]:
                         "role": "user"
                     }
                     save_users(users_db)
-                    st.success("ចុះឈ្មោះបង្កើតគណនីបានជោគជ័យ! សូមប្តូរទៅកាន់ផ្ទាំង Sign In ដើម្បីចូលប្រព័ន្ធ។")
+                    
+                    # Auto Login ចូលប្រព័ន្ធភ្លាមៗក្រោយពេល Sign Up ជោគជ័យ
+                    st.session_state["logged_in"] = True
+                    st.session_state["user_info"] = {
+                        "email": signup_email,
+                        "name": signup_name,
+                        "role": "user"
+                    }
+                    st.success("ចុះឈ្មោះបានជោគជ័យ និងកំពុងចូលប្រព័ន្ធ...")
+                    time.sleep(0.5)
+                    st.rerun()
                     
         st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-# --- USER LOGGED IN DATA ---
 current_user = st.session_state["user_info"]
 
-# --- MEDIA PROCESSING FUNCTIONS (WATERMARK & EDITING) ---
 def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
     try:
         image = Image.open(input_path).convert("RGBA")
@@ -270,7 +269,6 @@ def process_video_watermark(input_path, output_path, watermark_text="UNME AI"):
         print(f"Error processing video watermark: {e}")
         return input_path
 
-# --- BACKGROUND SCHEDULER FUNCTION ---
 def run_scheduled_jobs():
     while True:
         time.sleep(60)
@@ -280,7 +278,6 @@ if 'scheduler_started' not in st.session_state:
     bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
     bg_thread.start()
 
-# --- SIDEBAR CONFIGURATION ---
 st.sidebar.title(f"👤 {current_user['name']}")
 st.sidebar.caption(f"Email: {current_user['email']}")
 
@@ -337,11 +334,10 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.7 Pro (Gray Theme Authentication)  
+    * **ជំនាន់ (Version):** 2.8 Pro (Auto Login Sign Up)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
-# --- MAIN INTERFACE (FIXED STICKY HEADER) ---
 st.markdown("""
     <div class="sticky-header">
         <h1 style="margin:0; font-size: 26px; font-weight: 700; color: #1e293b;">🚀 UNME AI Social Media</h1>
@@ -349,7 +345,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- REORDERED TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
@@ -357,7 +352,6 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "💬 Support Chat & AI Assistant"
 ])
 
-# --- TAB 1: MAIN DASHBOARD ---
 with tab1:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
@@ -515,7 +509,6 @@ with tab1:
             st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TAB 2: ANALYTICS DASHBOARD ---
 with tab2:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("📊 Analytics & Performance Dashboard")
@@ -556,7 +549,6 @@ with tab2:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TAB 3: VIEW HISTORY ---
 with tab3:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
@@ -599,7 +591,6 @@ with tab3:
             st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TAB 4: SUPPORT CHAT ---
 with tab4:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support Chat & AI Assistant)")
