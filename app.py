@@ -23,7 +23,6 @@ st.set_page_config(
 # --- BACKGROUND SCHEDULER FUNCTION ---
 def run_scheduled_jobs():
     while True:
-        # ទីកន្លែងសម្រាប់ពិនិត្យ និងដំណើរការ Background Tasks តាមកាលវិភាគ
         time.sleep(60)
 
 if 'scheduler_started' not in st.session_state:
@@ -61,20 +60,25 @@ with st.sidebar.expander("📊 Google Sheets Configuration", expanded=True):
     gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
     gsheet_url = st.text_input("Spreadsheet URL / ID")
 
-# 3. TikTok Credentials Expander
+# 3. Facebook Credentials Expander (Added)
+with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
+    fb_page_id = st.text_input("Facebook Page ID")
+    fb_access_token = st.text_input("Facebook Access Token / API", type="password")
+
+# 4. TikTok Credentials Expander
 with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
     tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
 
-# 4. YouTube Credentials Expander
+# 5. YouTube Credentials Expander
 with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
     yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-# 5. Telegram Notification Settings Expander
+# 6. Telegram Notification Settings Expander
 with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
     tg_token = st.text_input("Telegram Bot Token", type="password")
     tg_chat_id = st.text_input("Telegram Chat ID")
 
-# 6. Background Scheduler Settings Expander
+# 7. Background Scheduler Settings Expander
 with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
     schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
     st.caption("មុខងារ Auto Scheduler កំពុងដំណើរការក្នុងប្រព័ន្ធផ្ទៃខាងក្រោយ (Background Thread)។")
@@ -85,7 +89,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME Multi-Platform AI Workflow**  
-    * **ជំនាន់ (Version):** 2.0 Pro (Auto Scheduler Enabled)  
+    * **ជំនាន់ (Version):** 2.0 Pro (Facebook API Enabled)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube ។  
 
     ---
@@ -93,13 +97,14 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 📖 របៀបប្រើប្រាស់ (How to Use)
     1. **កំណត់ការតភ្ជាប់ (Sidebar):** 
        - បញ្ចូល API Key របស់ Google Gemini ឬ OpenAI ។
-       - បំពេញ Google Sheets JSON Key និង URL (ប្រសិនបើចង់រក្សាទុកប្រវត្តិលើ Cloud)។
+       - បំពេញ **Facebook Page ID & Access Token** សម្រាប់ផុសចូល Facebook ។
+       - បំពេញ Google Sheets JSON Key (បើចង់រក្សាទុកប្រវត្តិលើ Cloud)។
     2. **ជ្រើសរើសប្រភេទផុស (Post Type):** 
        - ជ្រើសរើសរវាង **Video / Reels** ឬ **Picture / Photo Posts** រួច Upload ឯកសារផ្ទាល់។
     3. **បង្កើត Caption ដោយ AI:** 
        - សរសេរ Prompt រួចចុចប៊ូតុងបង្កើត Caption និងកែសម្រួលតាមតម្រូវការ។
     4. **ជ្រើសរើស Platform & Upload:** 
-       - គ្រូសធីកលើវេទិកាដែលចង់ផុស (Facebook, TikTok, YouTube) ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
+       - គ្រូសធីកលើវេទិកាដែលចង់ផុស ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
     """)
 
 # --- MAIN INTERFACE (2 COLUMNS LAYOUT) ---
@@ -189,6 +194,7 @@ with left_col:
             results = []
             
             if pub_fb:
+                # អាចបញ្ជូន fb_page_id និង fb_access_token ចូលទៅកាន់ function ខាងក្រោមប្រសិនបើចាំបាច់
                 res_fb = upload_to_facebook(media_file_path, final_caption, post_type=post_type)
                 results.append(res_fb)
             if pub_tiktok:
