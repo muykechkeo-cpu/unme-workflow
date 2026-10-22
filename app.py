@@ -238,14 +238,15 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- SEPARATE INTO 4 MODERN TABS ---
+# --- REORDERED TABS: Analytics Dashboard is now Tab 2 (Next to Dashboard) ---
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
+    "📈 Analytics Dashboard",
     "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
-    "💬 Support Chat & AI Assistant",
-    "📈 Analytics Dashboard"
+    "💬 Support Chat & AI Assistant"
 ])
 
+# --- TAB 1: MAIN DASHBOARD ---
 with tab1:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
@@ -396,7 +397,49 @@ with tab1:
             st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
     st.markdown('</div>', unsafe_allow_html=True)
 
+# --- TAB 2: ANALYTICS DASHBOARD (MOVED NEXT TO MAIN DASHBOARD) ---
 with tab2:
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.subheader("📊 Analytics & Performance Dashboard")
+    st.markdown("ផ្ទាំងបង្ហាញស្ថិតិ និងការវិភាគទូទៅនៃការបញ្ជូនមាតិកាទៅកាន់ Social Media Platforms។")
+
+    if os.path.exists("history.json"):
+        try:
+            with open("history.json", "r", encoding="utf-8") as f:
+                hist_data = json.load(f)
+            
+            total_posts = len(hist_data)
+            fb_count = sum(1 for item in hist_data if any("Facebook" in str(r)) for r in item.get("results", []))
+            tiktok_count = sum(1 for item in hist_data if any("TikTok" in str(r)) for r in item.get("results", []))
+            yt_count = sum(1 for item in hist_data if any("YouTube" in str(r)) for r in item.get("results", []))
+
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("📌 ការផុសសរុប (Total Posts)", total_posts)
+            m2.metric("📘 Facebook Posts", fb_count)
+            m3.metric("🎵 TikTok Posts", tiktok_count)
+            m4.metric("📺 YouTube Posts", yt_count)
+
+            st.markdown("---")
+            st.subheader("📈 ប្រវត្តិនៃការប្រើប្រាស់តាមវេទិកា")
+            
+            if total_posts > 0:
+                st.bar_chart({
+                    "Facebook": fb_count,
+                    "TikTok": tiktok_count,
+                    "YouTube": yt_count
+                })
+            else:
+                st.info("មិនទាន់មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់បង្ហាញជាក្រាហ្វិក (Chart) ទេ។")
+
+        except Exception as e:
+            st.error(f"មានបញ្ហាក្នុងការអានទិន្នន័យសម្រាប់ Analytics៖ {e}")
+    else:
+        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារ (history.json) នៅឡើយទេ។ សូមធ្វើការ Upload មាតិកាសិន។")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- TAB 3: VIEW HISTORY ---
+with tab3:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
 
@@ -438,7 +481,8 @@ with tab2:
             st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
     st.markdown('</div>', unsafe_allow_html=True)
 
-with tab3:
+# --- TAB 4: SUPPORT CHAT ---
+with tab4:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support Chat & AI Assistant)")
     st.markdown("សួរសំណួរ ឬពិភាក្សាជាមួយ AI Support អំពីបញ្ហាបច្ចេកទេស ការប្រើប្រាស់ API ឬគន្លឹះផ្សេងៗក្នុងប្រព័ន្ធ **UNME AI Social Media**។")
@@ -473,44 +517,4 @@ with tab3:
                     err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
                     st.error(err_msg)
                     st.session_state["support_messages"].append({"role": "assistant", "content": err_msg})
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with tab4:
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.subheader("📊 Analytics & Performance Dashboard")
-    st.markdown("ផ្ទាំងបង្ហាញស្ថិតិ និងការវិភាគទូទៅនៃការបញ្ជូនមាតិកាទៅកាន់ Social Media Platforms។")
-
-    if os.path.exists("history.json"):
-        try:
-            with open("history.json", "r", encoding="utf-8") as f:
-                hist_data = json.load(f)
-            
-            total_posts = len(hist_data)
-            fb_count = sum(1 for item in hist_data if any("Facebook" in str(r)) for r in item.get("results", []))
-            tiktok_count = sum(1 for item in hist_data if any("TikTok" in str(r)) for r in item.get("results", []))
-            yt_count = sum(1 for item in hist_data if any("YouTube" in str(r)) for r in item.get("results", []))
-
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("📌 ការផុសសរុប (Total Posts)", total_posts)
-            m2.metric("📘 Facebook Posts", fb_count)
-            m3.metric("🎵 TikTok Posts", tiktok_count)
-            m4.metric("📺 YouTube Posts", yt_count)
-
-            st.markdown("---")
-            st.subheader("📈 ប្រវត្តិនៃការប្រើប្រាស់តាមវេទិកា")
-            
-            if total_posts > 0:
-                st.bar_chart({
-                    "Facebook": fb_count,
-                    "TikTok": tiktok_count,
-                    "YouTube": yt_count
-                })
-            else:
-                st.info("មិនទាន់មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់បង្ហាញជាក្រាហ្វិក (Chart) ទេ។")
-
-        except Exception as e:
-            st.error(f"មានបញ្ហាក្នុងការអានទិន្នន័យសម្រាប់ Analytics៖ {e}")
-    else:
-        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារ (history.json) នៅឡើយទេ។ សូមធ្វើការ Upload មាតិកាសិន។")
-
     st.markdown('</div>', unsafe_allow_html=True)
