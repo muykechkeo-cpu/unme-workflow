@@ -156,7 +156,7 @@ if not st.session_state["logged_in"]:
         
         else:  # Sign Up Mode
             st.subheader("បង្កើតគណនីថ្មី (Sign Up)")
-            signup_name = st.text_input("ชื่อពេញ / Full Name (ឈ្មោះបង្ហាញ)")
+            signup_name = st.text_input("ឈ្មោះពេញ / Full Name (ឈ្មោះបង្ហាញ)")
             signup_user = st.text_input("Choose Username (ឈ្មោះគណនីថ្មី)")
             signup_pass = st.text_input("Choose Password (ពាក្យសម្ងាត់ថ្មី)", type="password")
             
