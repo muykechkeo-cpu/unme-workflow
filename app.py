@@ -108,7 +108,6 @@ def is_valid_email(email):
 USER_DB_FILE = "users.json"
 
 def load_users():
-    # គណនី Admin គំរូដោយប្រើ Email
     default_users = {
         "admin@unme.com": {
             "password": "adminpassword",
@@ -181,7 +180,6 @@ if not st.session_state["logged_in"]:
                 elif signup_email in users_db:
                     st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ! សូមប្រើប្រាស់អ៊ីមែលផ្សេង ឬចុច Sign In។")
                 else:
-                    # រក្សាទុកគណនីថ្មីក្នុង users.json (ជា Standard User)
                     users_db[signup_email] = {
                         "password": signup_pass,
                         "name": signup_name,
@@ -264,10 +262,9 @@ if 'scheduler_started' not in st.session_state:
     bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
     bg_thread.start()
 
-# --- SIDEBAR CONFIGURATION ---
+# --- SIDEBAR CONFIGURATION (OPEN FULL ACCESS TO ALL USERS) ---
 st.sidebar.title(f"👤 {current_user['name']}")
 st.sidebar.caption(f"Email: {current_user['email']}")
-st.sidebar.caption(f"Role: {current_user['role'].upper()}")
 
 if st.sidebar.button("🚪 ចាកចេញពីប្រព័ន្ធ (Logout)"):
     st.session_state["logged_in"] = False
@@ -281,49 +278,41 @@ storage_mode = st.sidebar.selectbox(
     ["Local history.json", "Google Sheets"]
 )
 
-gsheet_json = ""
-gsheet_url = ""
-gemini_api_key = ""
-openai_api_key = ""
-ai_provider = "Google Gemini"
+# បើកសិទ្ធិឱ្យអ្នកប្រើប្រាស់គ្រប់រូបអាចកំណត់ Configuration និង API Keys បានទាំងអស់
+st.sidebar.title("⚙️ System Configuration")
 
-if current_user["role"] == "admin":
-    st.sidebar.title("⚙️ System Configuration (Admin Only)")
+with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
+    ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
+    if ai_provider == "Google Gemini":
+        gemini_api_key = st.text_input("Google Gemini API Key", type="password")
+        if gemini_api_key:
+            genai.configure(api_key=gemini_api_key)
+    else:
+        openai_api_key = st.text_input("OpenAI API Key", type="password")
+        if openai_api_key:
+            openai.api_key = openai_api_key
 
-    with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
-        ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
-        if ai_provider == "Google Gemini":
-            gemini_api_key = st.text_input("Google Gemini API Key", type="password")
-            if gemini_api_key:
-                genai.configure(api_key=gemini_api_key)
-        else:
-            openai_api_key = st.text_input("OpenAI API Key", type="password")
-            if openai_api_key:
-                openai.api_key = openai_api_key
+with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
+    gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
+    gsheet_url = st.text_input("Spreadsheet URL / ID")
 
-    with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
-        gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
-        gsheet_url = st.text_input("Spreadsheet URL / ID")
+with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
+    fb_page_id = st.text_input("Facebook Page ID")
+    fb_access_token = st.text_input("Facebook Access Token / API", type="password")
 
-    with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
-        fb_page_id = st.text_input("Facebook Page ID")
-        fb_access_token = st.text_input("Facebook Access Token / API", type="password")
+with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
+    tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
 
-    with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
-        tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
+with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
+    yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-    with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
-        yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
+with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
+    tg_token = st.text_input("Telegram Bot Token", type="password")
+    tg_chat_id = st.text_input("Telegram Chat ID")
 
-    with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
-        tg_token = st.text_input("Telegram Bot Token", type="password")
-        tg_chat_id = st.text_input("Telegram Chat ID")
-
-    with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
-        schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
-        st.caption("មុខងារ Auto Scheduler កំពុងដំណើរការក្នុងប្រព័ន្ធផ្ទៃខាងក្រោយ។")
-else:
-    st.sidebar.info("🔒 គណនីរបស់អ្នកជា Standard User។ ផ្នែកកំណត់ API ត្រូវបានរក្សាសុវត្ថិភាពដោយ Admin។")
+with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
+    schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
+    st.caption("មុខងារ Auto Scheduler កំពុងដំណើរការក្នុងប្រព័ន្ធផ្ទៃខាងក្រោយ។")
 
 st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស់", expanded=False):
@@ -331,7 +320,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.5 Pro (Email Authentication)  
+    * **ជំនាន់ (Version):** 2.6 Pro (Full User Customization Enabled)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
@@ -418,7 +407,7 @@ with tab1:
                 except Exception as e:
                     st.error(f"មានកំហុសក្នុងការតភ្ជាប់ Gemini AI៖ {e}")
             else:
-                st.warning("សូមបញ្ចូល Google Gemini API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន (ឬទាក់ទង Admin)។")
+                st.warning("សូមបញ្ចូល Google Gemini API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន។")
         else:
             if 'openai_api_key' in locals() and openai_api_key:
                 try:
@@ -433,7 +422,7 @@ with tab1:
                 except Exception as e:
                     st.error(f"មានកំហុសក្នុងការតភ្ជាប់ OpenAI API៖ {e}")
             else:
-                st.warning("សូមបញ្ចូល OpenAI API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន (ឬទាក់ទង Admin)។")
+                st.warning("សូមបញ្ចូល OpenAI API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន។")
 
     final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -621,7 +610,7 @@ with tab4:
                         chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media built by Hab Rithy'. Answer the user's question professionally: {user_query}")
                         bot_reply = chat_response.text
                     else:
-                        bot_reply = "សូមបញ្ចូល Google Gemini API Key នៅផ្នែក Sidebar ខាងឆ្វេងជាមុនសិន (ឬទាក់ទង Admin) ដើម្បីឱ្យ Support AI អាចដំណើរការឆ្លើយតបបាន។"
+                        bot_reply = "សូមបញ្ចូល Google Gemini API Key នៅផ្នែក Sidebar ខាងឆ្វេងជាមុនសិន ដើម្បីឱ្យ Support AI អាចដំណើរការឆ្លើយតបបាន។"
                     
                     st.markdown(bot_reply)
                     st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
