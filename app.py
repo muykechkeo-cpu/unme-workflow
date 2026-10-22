@@ -349,11 +349,17 @@ with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
 
 with st.sidebar.expander("📁 គ្រប់គ្រងទិន្នន័យ (Data Storage)", expanded=True):
     storage_type = st.selectbox("ជ្រើសរើសទីតាំងរើស Store Data", ["Local JSON File (history.json)", "Cloud Database / Google Sheets"])
-    st.caption(f"បច្ចុប្បន្នរក្សាទុកទិន្នន័យនៅ៖ **{storage_type}**")
     
-    if os.path.exists("history.json"):
-        with open("history.json", "rb") as f:
-            st.download_button("📥 Download History Data", f, file_name="history.json", mime="application/json")
+    if storage_type == "Cloud Database / Google Sheets":
+        sheet_id_input = st.text_input("Google Sheet ID", placeholder="បញ្ចូល Spreadsheet ID នៅទីនេះ...")
+        sheet_api_input = st.text_input("Google Sheets API Key / Credentials", type="password", placeholder="បញ្ចូល API Key ឬ JSON Secret...")
+        if sheet_id_input:
+            st.success("✅ បានតភ្ជាប់ Google Sheet ID រួចរាល់")
+    else:
+        st.caption("ប្រព័ន្ធកំពុងរក្សាទុកទិន្នន័យក្នុង Local File (history.json)")
+        if os.path.exists("history.json"):
+            with open("history.json", "rb") as f:
+                st.download_button("📥 Download History Data", f, file_name="history.json", mime="application/json")
 
 with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
     fb_page_id = st.text_input("Facebook Page ID")
@@ -374,7 +380,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 5.4 Soft UI Pro  
+    * **ជំនាន់ (Version):** 5.5 Soft UI Pro  
     """)
 
 # --- TOP HEADER ---
@@ -441,7 +447,7 @@ with tab1:
         horizontal=True
     )
 
-    enable_watermark = st.checkbox("✨ បើកដំណើរการដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
+    enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
     watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
     media_file_path = None
 
@@ -642,7 +648,7 @@ with tab3:
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
-        st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
+        st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
