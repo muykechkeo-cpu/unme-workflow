@@ -21,6 +21,15 @@ from multi_platform import upload_to_youtube, upload_to_tiktok, upload_to_facebo
 # Load environment variables
 load_dotenv()
 
+# --- SECURE CREDENTIALS LOADING ---
+GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
+OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+SENDER_EMAIL = st.secrets.get("SENDER_EMAIL") or os.getenv("SENDER_EMAIL")
+SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD") or os.getenv("SENDER_PASSWORD")
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+
 st.set_page_config(
     page_title="UNME AI Social Media",
     page_icon="🚀",
@@ -122,12 +131,13 @@ def is_valid_email(email):
     return re.match(pattern, email) is not None
 
 def send_verification_email(receiver_email, otp_code):
-    sender_email = "your_email@gmail.com"  # ប្តូរជា Email របស់អ្នក
-    sender_password = "your_app_password"  # ប្តូរជា Google App Password របស់អ្នក
-    
+    if not SENDER_EMAIL or not SENDER_PASSWORD:
+        print("Error: SENDER_EMAIL or SENDER_PASSWORD is not configured.")
+        return False
+        
     message = MIMEMultipart("alternative")
     message["Subject"] = "UNME AI - Verification Code (OTP)"
-    message["From"] = sender_email
+    message["From"] = SENDER_EMAIL
     message["To"] = receiver_email
 
     html = f"""
@@ -149,8 +159,8 @@ def send_verification_email(receiver_email, otp_code):
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, receiver_email, message.as_string())
+        server.login(SENDER_EMAIL, SENDER_PASSWORD)
+        server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())
         server.quit()
         return True
     except Exception as e:
@@ -253,7 +263,7 @@ if not st.session_state["logged_in"]:
                                 st.session_state["signup_step"] = 2
                                 st.rerun()
                             else:
-                                st.error("មានបញ្ហាក្នុងការផ្ញើអ៊ីមែល សូមពិនិត្យមើល SMTP Configuration ។")
+                                st.error("មានបញ្ហាក្នុងការផ្ញើអ៊ីមែល សូមពិនិត្យមើល SENDER_EMAIL និង SENDER_PASSWORD ក្នុង .env ។")
 
             elif st.session_state["signup_step"] == 2:
                 st.info(f"សូមពិនិត្យមើលប្រអប់សារ (Inbox/Spam) របស់អ៊ីមែល៖ {st.session_state['temp_user_data']['email']}")
@@ -386,14 +396,22 @@ st.sidebar.title("⚙️ System Configuration")
 
 with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
     ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
+    # ប្រើប្រាស់ API Keys ដែលបានទាញយកមកស្វ័យប្រវត្តិពី .env / Secrets ស្រាប់
     if ai_provider == "Google Gemini":
-        gemini_api_key = st.text_input("Google Gemini API Key", type="password")
-        if gemini_api_key:
-            genai.configure(api_key=gemini_api_key)
+        if GEMINI_API_KEY:
+            st.success("✅ Gemini API Key បានផ្ទុកស្រាប់ពី System Secrets")
+        else:
+            gemini_api_key_input = st.text_input("Google Gemini API Key", type="password")
+            if gemini_api_key_input:
+                genai.configure(api_key=gemini_api_key_input)
     else:
-        openai_api_key = st.text_input("OpenAI API Key", type="password")
-        if openai_api_key:
-            openai.api_key = openai_api_key
+        if OPENAI_API_KEY:
+            st.success("✅ OpenAI API Key បានផ្ទុកស្រាប់ពី System Secrets")
+            openai.api_key = OPENAI_API_KEY
+        else:
+            openai_api_key_input = st.text_input("OpenAI API Key", type="password")
+            if openai_api_key_input:
+                openai.api_key = openai_api_key_input
 
 with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
     gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
@@ -423,7 +441,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.9 Pro (Email OTP Verified)  
+    * **ជំនាន់ (Version):** 2.9 Pro (Email OTP Verified & Secure Secrets)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
@@ -439,7 +457,7 @@ st.markdown("""
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -500,7 +518,7 @@ with tab1:
     generated_caption = ""
     if st.button(f"✨ បង្កើត Caption ដោយប្រើ {ai_provider}", type="primary"):
         if ai_provider == "Google Gemini":
-            if 'gemini_api_key' in locals() and gemini_api_key:
+            if GEMINI_API_KEY:
                 try:
                     model = genai.GenerativeModel('gemini-1.5-flash')
                     response = model.generate_content(f"Write a social media caption and hashtags based on this prompt: {caption_prompt}")
@@ -510,11 +528,11 @@ with tab1:
                 except Exception as e:
                     st.error(f"មានកំហុសក្នុងការតភ្ជាប់ Gemini AI៖ {e}")
             else:
-                st.warning("សូមបញ្ចូល Google Gemini API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន។")
+                st.warning("មិនមាន GEMINI_API_KEY នៅក្នុងប្រព័ន្ធទេ។ សូមពិនិត្យមើលឯកសារ .env ។")
         else:
-            if 'openai_api_key' in locals() and openai_api_key:
+            if OPENAI_API_KEY:
                 try:
-                    client = openai.OpenAI(api_key=openai_api_key)
+                    client = openai.OpenAI(api_key=OPENAI_API_KEY)
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[{"role": "user", "content": f"Write a social media caption and hashtags based on this prompt: {caption_prompt}"}]
@@ -525,7 +543,7 @@ with tab1:
                 except Exception as e:
                     st.error(f"មានកំហុសក្នុងការតភ្ជាប់ OpenAI API៖ {e}")
             else:
-                st.warning("សូមបញ្ចូល OpenAI API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន។")
+                st.warning("មិនមាន OPENAI_API_KEY នៅក្នុងប្រព័ន្ធទេ។")
 
     final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -645,7 +663,7 @@ with tab2:
 # --- TAB 3: VIEW HISTORY ---
 with tab3:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
+    st.subheader("📊 ពិនិត្យប្រវត្តិการងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យប្រវត្តិការងារឡើងវិញ"):
         st.rerun()
@@ -708,12 +726,12 @@ with tab4:
         with st.chat_message("assistant"):
             with st.spinner("កំពុងពិចារណា..."):
                 try:
-                    if 'gemini_api_key' in locals() and gemini_api_key:
+                    if GEMINI_API_KEY:
                         model = genai.GenerativeModel('gemini-1.5-flash')
                         chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media built by Hab Rithy'. Answer the user's question professionally: {user_query}")
                         bot_reply = chat_response.text
                     else:
-                        bot_reply = "សូមបញ្ចូល Google Gemini API Key នៅផ្នែក Sidebar ខាងឆ្វេងជាមុនសិន ដើម្បីឱ្យ Support AI អាចដំណើរការឆ្លើយតបបាន។"
+                        bot_reply = "សូមកំណត់ GEMINI_API_KEY ក្នុង .env ជាមុនសិន ដើម្បីឱ្យ Support AI អាចដំណើរការឆ្លើយតបបាន។"
                     
                     st.markdown(bot_reply)
                     st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
