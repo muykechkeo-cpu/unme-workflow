@@ -23,7 +23,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- MODERN ADVANCED CUSTOM CSS FOR UI STYLING ---
+# --- MODERN ADVANCED CUSTOM CSS FOR UI STYLING & GRAY BACKGROUND ---
 st.markdown("""
     <style>
         .block-container {
@@ -51,6 +51,17 @@ st.markdown("""
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
             margin-bottom: 20px;
         }
+
+        /* 🎨 Background ពណ៌ប្រផេះ សម្រាប់ប្រអប់ Sign In / Sign Up */
+        .auth-card-gray {
+            background: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
+            padding: 35px;
+            border-radius: 18px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+            margin-top: 15px;
+        }
+
         .stTabs [data-baseweb="tab-list"] {
             gap: 12px;
         }
@@ -76,6 +87,7 @@ st.markdown("""
             padding: 10px 20px;
             transition: all 0.3s ease;
         }
+        
         @media (prefers-color-scheme: dark) {
             .sticky-header {
                 background: rgba(14, 17, 23, 0.95);
@@ -85,6 +97,11 @@ st.markdown("""
             .css-card {
                 background-color: #1e293b;
                 border: 1px solid #334155;
+            }
+            .auth-card-gray {
+                background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+                border: 1px solid #334155;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
             }
             .stTabs [data-baseweb="tab"] {
                 background-color: #1e293b;
@@ -135,12 +152,13 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
-# --- EMAIL-BASED SIGN IN / SIGN UP INTERFACE ---
+# --- EMAIL-BASED SIGN IN / SIGN UP INTERFACE (WITH GRAY BACKGROUND) ---
 if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown('<div class="css-card">', unsafe_allow_html=True)
+        # បន្ថែម class="auth-card-gray" ដើម្បីបង្កើត Background ពណ៌ប្រផេះ
+        st.markdown('<div class="auth-card-gray">', unsafe_allow_html=True)
         st.title("🚀 UNME AI Social Media")
         
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["🔑 ចូលប្រព័ន្ធ (Sign In)", "📝 ចុះឈ្មោះ (Sign Up)"], horizontal=True)
@@ -176,9 +194,9 @@ if not st.session_state["logged_in"]:
                 if not signup_name or not signup_email or not signup_pass:
                     st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យបានត្រឹមត្រូវ។")
                 elif not is_valid_email(signup_email):
-                    st.error("ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ! សូមពិនិត្យមើលឡើងវិញ (ឧទាហរណ៍៖ user@domain.com)។")
+                    st.error("ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ!")
                 elif signup_email in users_db:
-                    st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ! សូមប្រើប្រាស់អ៊ីមែលផ្សេង ឬចុច Sign In។")
+                    st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ!")
                 else:
                     users_db[signup_email] = {
                         "password": signup_pass,
@@ -262,7 +280,7 @@ if 'scheduler_started' not in st.session_state:
     bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
     bg_thread.start()
 
-# --- SIDEBAR CONFIGURATION (OPEN FULL ACCESS TO ALL USERS) ---
+# --- SIDEBAR CONFIGURATION ---
 st.sidebar.title(f"👤 {current_user['name']}")
 st.sidebar.caption(f"Email: {current_user['email']}")
 
@@ -278,7 +296,6 @@ storage_mode = st.sidebar.selectbox(
     ["Local history.json", "Google Sheets"]
 )
 
-# បើកសិទ្ធិឱ្យអ្នកប្រើប្រាស់គ្រប់រូបអាចកំណត់ Configuration និង API Keys បានទាំងអស់
 st.sidebar.title("⚙️ System Configuration")
 
 with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
@@ -320,7 +337,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.6 Pro (Full User Customization Enabled)  
+    * **ជំនាន់ (Version):** 2.7 Pro (Gray Theme Authentication)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
