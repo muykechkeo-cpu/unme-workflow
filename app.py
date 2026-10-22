@@ -31,7 +31,7 @@ st.set_page_config(
 # --- DARK NEON CUSTOM CSS & HTML STYLING ---
 st.markdown("""
     <style>
-        /* Global Reset & Dark Theme Background for Main Area */
+        /* Global Reset & Dark Theme Background for Main App */
         .stApp {
             background-color: #0b0f19;
             color: #ffffff !important;
@@ -43,12 +43,12 @@ st.markdown("""
             max-width: 98% !important;
         }
         
-        /* Force Main Area Text and Labels to WHITE */
+        /* Force Main Area Text to WHITE */
         .main p, .main span, .main label, .main div, .main .stMarkdown, .main .stRadio label, .main .stCheckbox label, .main .stCaption {
             color: #ffffff !important;
         }
         
-        /* Force Main Area Titles and Subheaders to NEON BLUE */
+        /* Force Main Area Titles to NEON BLUE */
         .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, .main .stSubheader {
             color: #60a5fa !important;
         }
@@ -65,6 +65,11 @@ st.markdown("""
         [data-testid="stSidebar"] h1, 
         [data-testid="stSidebar"] h2, 
         [data-testid="stSidebar"] h3 {
+            color: #000000 !important;
+        }
+
+        /* Force Login Box Text to BLACK */
+        .auth-box p, .auth-box span, .auth-box label, .auth-box div, .auth-box .stRadio label {
             color: #000000 !important;
         }
 
@@ -155,10 +160,10 @@ st.markdown("""
 
         /* Auth Container Styling */
         .auth-box {
-            background: #111827;
+            background: #ffffff;
             padding: 40px;
             border-radius: 20px;
-            border: 1px solid #1f2937;
+            border: 1px solid #cbd5e1;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
     </style>
@@ -216,8 +221,8 @@ if not st.session_state["logged_in"]:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown('<div class="auth-box">', unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center; color: #60a5fa; margin-bottom: 10px;'>🚀 UNME AI Social Media</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #ffffff; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #2563eb; margin-bottom: 10px;'>🚀 UNME AI Social Media</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #000000; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប</p>", unsafe_allow_html=True)
         
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["🔑 ចូលប្រព័ន្ធ (Sign In)", "📝 ចុះឈ្មោះ (Sign Up)"], horizontal=True)
         st.markdown("<br>", unsafe_allow_html=True)
@@ -386,7 +391,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 4.5 Dark Neon Pro  
+    * **ជំនាន់ (Version):** 4.6 Dark Neon Pro  
     """)
 
 # --- TOP HEADER ---
@@ -439,7 +444,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
