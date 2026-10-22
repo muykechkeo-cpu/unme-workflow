@@ -15,10 +15,30 @@ from multi_platform import upload_to_youtube, upload_to_tiktok, upload_to_facebo
 load_dotenv()
 
 st.set_page_config(
-    page_title="UNME Multi-Platform AI Workflow",
+    page_title="UNME AI Social Media",
     page_icon="🚀",
     layout="wide"
 )
+
+# --- CUSTOM CSS FOR STICKY HEADER & REDUCED PADDING ---
+st.markdown("""
+    <style>
+        /* កាត់បន្ថយគម្លាតផ្នែកខាងលើរបស់ Streamlit ឱ្យឡើងលើបន្តិច */
+        .block-container {
+            padding-top: 1.5rem !important;
+        }
+        /* ធ្វើឱ្យចំណងជើងหลักនៅនឹងថ្កល់ពេល Scroll */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background-color: var(--background-color, #ffffff);
+            z-index: 999;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(150, 150, 150, 0.2);
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # --- BACKGROUND SCHEDULER FUNCTION ---
 def run_scheduled_jobs():
@@ -40,7 +60,7 @@ storage_mode = st.sidebar.selectbox(
 
 st.sidebar.markdown("---")
 
-# 1. AI Provider Selection Expander (បើកបង្ហាញស្រាប់ពេលចូលដំបូង)
+# 1. AI Provider Selection Expander
 with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
     ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
     
@@ -53,32 +73,32 @@ with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
         if openai_api_key:
             openai.api_key = openai_api_key
 
-# 2. Google Sheets Configuration Expander (បិទជិតពេលចូលដំបូង)
+# 2. Google Sheets Configuration Expander
 gsheet_json = ""
 gsheet_url = ""
 with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
     gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
     gsheet_url = st.text_input("Spreadsheet URL / ID")
 
-# 3. Facebook Credentials Expander (បិទជិតពេលចូលដំបូង)
+# 3. Facebook Credentials Expander
 with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
     fb_page_id = st.text_input("Facebook Page ID")
     fb_access_token = st.text_input("Facebook Access Token / API", type="password")
 
-# 4. TikTok Credentials Expander (បិទជិតពេលចូលដំបូង)
+# 4. TikTok Credentials Expander
 with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
     tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
 
-# 5. YouTube Credentials Expander (បិទជិតពេលចូលដំបូង)
+# 5. YouTube Credentials Expander
 with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
     yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-# 6. Telegram Notification Settings Expander (បិទជិតពេលចូលដំបូង)
+# 6. Telegram Notification Settings Expander
 with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
     tg_token = st.text_input("Telegram Bot Token", type="password")
     tg_chat_id = st.text_input("Telegram Chat ID")
 
-# 7. Background Scheduler Settings Expander (បិទជិតពេលចូលដំបូង)
+# 7. Background Scheduler Settings Expander
 with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
     schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
     st.caption("មុខងារ Auto Scheduler កំពុងដំណើរការក្នុងប្រព័ន្ធផ្ទៃខាងក្រោយ។")
@@ -88,7 +108,8 @@ st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស់", expanded=False):
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
-    **UNME Multi-Platform AI Workflow**  
+    **UNME AI Social Media**  
+    * **បង្កើតដោយ (by):** Hab Rithy  
     * **ជំនាន់ (Version):** 2.0 Pro  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube ។  
 
@@ -107,9 +128,13 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
        - គ្រូសធីកលើវេទិកាដែលចង់ផុស ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
     """)
 
-# --- MAIN INTERFACE (2 COLUMNS LAYOUT) ---
-st.title("🚀 UNME Multi-Platform AI Social Media Workflow")
-st.markdown("ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube")
+# --- MAIN INTERFACE (STICKY HEADER) ---
+st.markdown("""
+    <div class="sticky-header">
+        <h1>🚀 UNME AI Social Media</h1>
+        <p style="margin:0; color: gray;">ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube</p>
+    </div>
+""", unsafe_allow_html=True)
 
 left_col, right_col = st.columns(2)
 
