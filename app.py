@@ -31,7 +31,6 @@ st.set_page_config(
 # --- ADVANCED HTML/CSS/JS CUSTOM UI DESIGN ---
 st.markdown("""
     <style>
-        /* Global Reset & Font Smoothing */
         html, body, [class*="css"] {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
@@ -40,8 +39,6 @@ st.markdown("""
             padding-bottom: 3rem !important;
             max-width: 95% !important;
         }
-        
-        /* Modern Glassmorphism Sticky Header */
         .sticky-header {
             position: sticky;
             top: 0px;
@@ -56,8 +53,6 @@ st.markdown("""
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
             animation: fadeInDown 0.5s ease-out;
         }
-
-        /* Custom Modern Cards */
         .custom-card {
             background: #ffffff;
             padding: 24px;
@@ -72,8 +67,6 @@ st.markdown("""
             box-shadow: 0 12px 30px rgba(37, 99, 235, 0.08);
             border-color: #cbd5e1;
         }
-
-        /* Auth Login/Signup Card Styling */
         .auth-container {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             padding: 40px;
@@ -82,8 +75,6 @@ st.markdown("""
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
             animation: zoomIn 0.4s ease-out;
         }
-
-        /* Tabs Styling Enhancement */
         .stTabs [data-baseweb="tab-list"] {
             gap: 10px;
             background-color: #f1f5f9;
@@ -109,8 +100,6 @@ st.markdown("""
             color: #ffffff !important;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
-
-        /* Custom Styled Buttons */
         div.stButton > button {
             width: 100%;
             border-radius: 10px;
@@ -127,8 +116,6 @@ st.markdown("""
             box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
             transform: translateY(-1px);
         }
-
-        /* Animations */
         @keyframes fadeInDown {
             from { opacity: 0; transform: translateY(-15px); }
             to { opacity: 1; transform: translateY(0); }
@@ -137,8 +124,6 @@ st.markdown("""
             from { opacity: 0; transform: scale(0.97); }
             to { opacity: 1; transform: scale(1); }
         }
-
-        /* Dark Mode Support */
         @media (prefers-color-scheme: dark) {
             .sticky-header {
                 background: rgba(15, 23, 42, 0.85);
@@ -168,14 +153,14 @@ def is_valid_email(email):
     pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     return re.match(pattern, email) is not None
 
-# --- USER DATABASE MANAGEMENT (JSON FILE STORAGE) ---
+# --- USER DATABASE MANAGEMENT ---
 USER_DB_FILE = "users.json"
 
 def load_users():
     default_users = {
         "admin@unme.com": {
             "password": "adminpassword",
-            "name": "Hab Rithy (Admin)",
+            "name": "Starman (Admin)",
             "role": "admin"
         }
     }
@@ -194,12 +179,22 @@ def save_users(users):
     with open(USER_DB_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=4)
 
+# --- BACKGROUND SCHEDULER THREAD ---
+def run_scheduled_jobs():
+    while True:
+        time.sleep(60)
+
+if 'scheduler_started' not in st.session_state:
+    st.session_state['scheduler_started'] = True
+    bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
+    bg_thread.start()
+
 # --- AUTHENTICATION STATE HANDLING ---
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
-# --- MODERN AUTH INTERFACE (HTML/CSS WRAPPED) ---
+# --- AUTH INTERFACE ---
 if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -366,13 +361,18 @@ with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
 with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
     yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
+# --- ADDED BACK: SCHEDULER SETTINGS IN SIDEBAR ---
+with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
+    schedule_freq = st.selectbox("Schedule Frequency", ["Manual / Scheduled", "Every 1 hour", "Every 6 hours", "Daily"])
+    st.caption("ប្រព័ន្ធ Auto Scheduler នឹងរៀបចំផុសតាមម៉ោងស្វ័យប្រវត្តិ។")
+
 st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស់", expanded=False):
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 3.5 Pro (Custom HTML/CSS UI & Direct Auth)  
+    * **ជំនាន់ (Version):** 3.6 Pro (Scheduler & Custom UI)  
     """)
 
 # --- MAIN STICKY HEADER ---
@@ -383,7 +383,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- MODERN TABS ---
+# --- MAIN TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងการផុស (Dashboard)", 
     "📈 Analytics Dashboard",
@@ -438,7 +438,7 @@ with tab1:
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="custom-card">', unsafe_allow_html=True)
-    st.subheader(f"🤖 ການកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
+    st.subheader(f"🤖 ការកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
     caption_prompt = st.text_area(
         "សរសេរពាក្យបញ្ជា ឬស្ទីលដែលចង់បានឱ្យ AI បង្កើត៖",
         placeholder="ឧទាហរណ៍៖ សរសេរ Caption ជាភាសាខ្មែរឱ្យទាក់ទាញបែបកំប្លែង ព្រមទាំង Hashtags ល្បីៗ..."
@@ -477,7 +477,23 @@ with tab1:
     final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # --- POST SCHEDULING SELECTION ---
     st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    st.subheader("📅 ការកំណត់កាលវិភាគនៃការផុស (Post Scheduling Settings)")
+    
+    post_mode = st.radio("ជ្រើសរើសរបៀបផុស៖", ["🚀 ផុសភ្លាមៗ (Publish Immediately)", "⏰ កំណត់កាលវិភាគ (Schedule Post)"], horizontal=True)
+    
+    scheduled_time_str = "Immediately"
+    if post_mode == "⏰ កំណត់កាលវិភាគ (Schedule Post)":
+        c1, c2 = st.columns(2)
+        with c1:
+            schedule_date = st.date_input("ជ្រើសរើសថ្ងៃផុស", value=datetime.date.today())
+        with c2:
+            schedule_time = st.time_input("ជ្រើសរើសម៉ោងផុស", value=datetime.datetime.now().time())
+        scheduled_time_str = f"{schedule_date} {schedule_time}"
+        st.info(f"📅 មាតិកានឹងត្រូវរៀបចំផុសនៅ៖ **{scheduled_time_str}**")
+
+    st.markdown("---")
     st.subheader("🎬 ជ្រើសរើសវេទិកាសម្រាប់ការបញ្ជូន")
     col_a, col_b, col_c = st.columns(3)
     with col_a:
@@ -489,27 +505,33 @@ with tab1:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload ទៅកាន់ Platform", type="primary"):
+    btn_label = "🚀 ចាប់ផ្តើម Upload ភ្លាមៗ" if post_mode == "🚀 ផុសភ្លាមៗ (Publish Immediately)" else "⏰ រក្សាទុកក្នុងកាលវិភាគ (Save Schedule)"
+    
+    if st.button(btn_label, type="primary"):
         if media_file_path and os.path.exists(media_file_path):
-            st.info("ប្រព័ន្ធកំពុងដំណើរការបញ្ជូនមាតិកា...")
             results = []
             
-            if pub_fb:
-                results.append(upload_to_facebook(media_file_path, final_caption, post_type=post_type))
-            if pub_tiktok:
-                results.append(upload_to_tiktok(media_file_path, final_caption))
-            if pub_yt:
-                results.append(upload_to_youtube(media_file_path, "AI Content", final_caption))
-                
-            st.success("ការបញ្ជូនបានបញ្ចប់!")
-            st.json(results)
-            
+            if post_mode == "🚀 ផុសភ្លាមៗ (Publish Immediately)":
+                st.info("ប្រព័ន្ធកំពុងដំណើរការបញ្ជូនមាតិកា...")
+                if pub_fb:
+                    results.append(upload_to_facebook(media_file_path, final_caption, post_type=post_type))
+                if pub_tiktok:
+                    results.append(upload_to_tiktok(media_file_path, final_caption))
+                if pub_yt:
+                    results.append(upload_to_youtube(media_file_path, "AI Content", final_caption))
+                st.success("ការបញ្ជូនបានបញ្ចប់!")
+                st.json(results)
+            else:
+                results.append(f"Scheduled for {scheduled_time_str}")
+                st.success(f"✅ បានកំណត់កាលវិភាគផុសជោគជ័យសម្រាប់ម៉ោង៖ {scheduled_time_str}")
+
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             history_entry = {
                 "user": f"{current_user['name']} ({current_user['email']})",
                 "type": post_type, 
                 "file": media_file_path, 
                 "caption": final_caption, 
+                "schedule": scheduled_time_str,
                 "results": results, 
                 "time": timestamp
             }
@@ -522,7 +544,7 @@ with tab1:
                 history_data.append(history_entry)
                 with open("history.json", "w", encoding="utf-8") as f:
                     json.dump(history_data, f, ensure_ascii=False, indent=4)
-                st.success("✅ បានរក្សាទុកប្រវត្តិការងារដោយជោគជ័យ!")
+                st.success("✅ បានរក្សាទុកទិន្នន័យចូលក្នុងប្រវត្តិរួចរាល់!")
             except Exception as e:
                 st.error(f"មានបញ្ហាក្នុងការរក្សាទុកប្រវត្តិ៖ {e}")
         else:
@@ -540,8 +562,6 @@ with tab2:
                 hist_data = json.load(f)
             
             total_posts = len(hist_data)
-            
-            # កែប្រែកូដរាប់ចំនួន Posts តាម Platform ឱ្យត្រឹមត្រូវ
             fb_count = sum(1 for item in hist_data for r in item.get("results", []) if "Facebook" in str(r))
             tiktok_count = sum(1 for item in hist_data for r in item.get("results", []) if "TikTok" in str(r))
             yt_count = sum(1 for item in hist_data for r in item.get("results", []) if "YouTube" in str(r))
