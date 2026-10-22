@@ -43,6 +43,11 @@ st.markdown("""
             max-width: 98% !important;
         }
         
+        /* Force Metric Text Color to White for Dark Theme */
+        [data-testid="stMetricValue"], [data-testid="stMetricLabel"], [data-testid="stMetricDelta"] {
+            color: #ffffff !important;
+        }
+        
         /* Dark Neon Cards */
         .neon-card {
             background: #111827;
@@ -356,7 +361,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 4.0 Dark Neon Pro  
+    * **ជំនាន់ (Version):** 4.1 Dark Neon Pro  
     """)
 
 # --- TOP HEADER ---
@@ -367,7 +372,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- METRIC CARDS OVERVIEW (Inspired by Design) ---
+# --- METRIC CARDS OVERVIEW ---
 if os.path.exists("history.json"):
     try:
         with open("history.json", "r", encoding="utf-8") as f:
@@ -409,7 +414,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -568,7 +573,7 @@ with tab1:
                     json.dump(history_data, f, ensure_ascii=False, indent=4)
                 st.success("✅ បានរក្សាទុកទិន្នន័យចូលក្នុងប្រវត្តិរួចរាល់!")
             except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងการរក្សាទុកប្រវត្តិ៖ {e}")
+                st.error(f"មានបញ្ហាក្នុងការរក្សាទុកប្រវត្តិ៖ {e}")
         else:
             st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -608,7 +613,7 @@ with tab2:
 # --- TAB 3: VIEW HISTORY ---
 with tab3:
     st.markdown('<div class="neon-card">', unsafe_allow_html=True)
-    st.subheader("📊 ពិនិត្យប្រវត្តិการងារ (View History)")
+    st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
         st.rerun()
