@@ -40,7 +40,7 @@ storage_mode = st.sidebar.selectbox(
 
 st.sidebar.markdown("---")
 
-# 1. AI Provider Selection Expander
+# 1. AI Provider Selection Expander (បើកបង្ហាញស្រាប់ពេលចូលដំបូង)
 with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
     ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
     
@@ -53,35 +53,35 @@ with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
         if openai_api_key:
             openai.api_key = openai_api_key
 
-# 2. Google Sheets Configuration Expander
+# 2. Google Sheets Configuration Expander (បិទជិតពេលចូលដំបូង)
 gsheet_json = ""
 gsheet_url = ""
-with st.sidebar.expander("📊 Google Sheets Configuration", expanded=True):
+with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
     gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
     gsheet_url = st.text_input("Spreadsheet URL / ID")
 
-# 3. Facebook Credentials Expander (Added)
+# 3. Facebook Credentials Expander (បិទជិតពេលចូលដំបូង)
 with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
     fb_page_id = st.text_input("Facebook Page ID")
     fb_access_token = st.text_input("Facebook Access Token / API", type="password")
 
-# 4. TikTok Credentials Expander
+# 4. TikTok Credentials Expander (បិទជិតពេលចូលដំបូង)
 with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
     tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
 
-# 5. YouTube Credentials Expander
+# 5. YouTube Credentials Expander (បិទជិតពេលចូលដំបូង)
 with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
     yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-# 6. Telegram Notification Settings Expander
+# 6. Telegram Notification Settings Expander (បិទជិតពេលចូលដំបូង)
 with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
     tg_token = st.text_input("Telegram Bot Token", type="password")
     tg_chat_id = st.text_input("Telegram Chat ID")
 
-# 7. Background Scheduler Settings Expander
+# 7. Background Scheduler Settings Expander (បិទជិតពេលចូលដំបូង)
 with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
     schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
-    st.caption("មុខងារ Auto Scheduler កំពុងដំណើរការក្នុងប្រព័ន្ធផ្ទៃខាងក្រោយ (Background Thread)។")
+    st.caption("មុខងារ Auto Scheduler កំពុងដំណើរការក្នុងប្រព័ន្ធផ្ទៃខាងក្រោយ។")
 
 # --- ABOUT & HOW TO USE SECTION IN SIDEBAR ---
 st.sidebar.markdown("---")
@@ -89,7 +89,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME Multi-Platform AI Workflow**  
-    * **ជំនាន់ (Version):** 2.0 Pro (Facebook API Enabled)  
+    * **ជំនាន់ (Version):** 2.0 Pro  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube ។  
 
     ---
@@ -194,7 +194,6 @@ with left_col:
             results = []
             
             if pub_fb:
-                # អាចបញ្ជូន fb_page_id និង fb_access_token ចូលទៅកាន់ function ខាងក្រោមប្រសិនបើចាំបាច់
                 res_fb = upload_to_facebook(media_file_path, final_caption, post_type=post_type)
                 results.append(res_fb)
             if pub_tiktok:
