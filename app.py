@@ -20,15 +20,13 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CUSTOM CSS FOR FIXED NON-MOVING LAYOUT & STICKY HEADER ---
+# --- CUSTOM CSS FOR STICKY HEADER ---
 st.markdown("""
     <style>
-        /* កាត់បន្ថយគម្លាតផ្នែកខាងលើរបស់ Streamlit */
         .block-container {
             padding-top: 1rem !important;
             padding-bottom: 2rem !important;
         }
-        /* ធ្វើឱ្យចំណងជើងនៅនឹងថ្កល់ដាច់ខាតពេល Scroll */
         .sticky-header {
             position: sticky;
             top: 0px;
@@ -39,16 +37,11 @@ st.markdown("""
             margin-bottom: 15px;
             border-bottom: 2px solid #f0f2f6;
         }
-        /* សម្រាប់ Dark Mode របស់ Streamlit */
         @media (prefers-color-scheme: dark) {
             .sticky-header {
                 background-color: #0e1117;
                 border-bottom: 2px solid #262730;
             }
-        }
-        /* ជួសជុលកុំឱ្យ Column ទាំងសងខាងរត់ ឬញាក់ប៉ះពាល់គ្នាពេល Scroll */
-        div[data-testid="column"] {
-            overflow-y: visible;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -141,7 +134,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
        - គ្រូសធីកលើវេទិកាដែលចង់ផុស ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
     """)
 
-# --- MAIN INTERFACE (FIXED NON-MOVING STICKY HEADER) ---
+# --- MAIN INTERFACE (STICKY HEADER) ---
 st.markdown("""
     <div class="sticky-header">
         <h1 style="margin:0; font-size: 28px;">🚀 UNME AI Social Media</h1>
@@ -149,9 +142,10 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-left_col, right_col = st.columns(2)
+# --- SEPARATE INTO TABS (ផ្ទាំងដាច់ដោយឡែកពីគ្នា) ---
+tab1, tab2 = st.tabs(["🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", "📊 ពិនិត្យប្រវត្តិការងារ (View History)"])
 
-with left_col:
+with tab1:
     # 1. Post Type & Media Input Section
     st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
     post_type = st.radio(
@@ -280,8 +274,8 @@ with left_col:
         else:
             st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
 
-with right_col:
-    # --- VIEW HISTORY TABLE SECTION (RIGHT COLUMN) ---
+with tab2:
+    # --- VIEW HISTORY TABLE SECTION (SEPARATE TAB) ---
     st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យប្រវត្តិការងារឡើងវិញ"):
