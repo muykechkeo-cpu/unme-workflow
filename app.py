@@ -20,27 +20,88 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CUSTOM CSS FOR STICKY HEADER ---
+# --- MODERN ADVANCED CUSTOM CSS FOR UI STYLING ---
 st.markdown("""
     <style>
+        /* 1. Global Page Layout & Spacing */
         .block-container {
-            padding-top: 1rem !important;
-            padding-bottom: 2rem !important;
+            padding-top: 1.2rem !important;
+            padding-bottom: 2.5rem !important;
+            max-width: 95% !important;
         }
+
+        /* 2. Fixed Sticky Top Header with Glassmorphism Effect */
         .sticky-header {
             position: sticky;
             top: 0px;
-            background-color: #ffffff;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
             z-index: 99999;
-            padding-top: 8px;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #f0f2f6;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eef2f6;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
+
+        /* 3. Modern Card Containers */
+        .css-card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #eef2f6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            margin-bottom: 20px;
+        }
+
+        /* 4. Tab Styling Enhancements */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 12px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            height: 48px;
+            padding: 0px 24px;
+            background-color: #f8fafc;
+            border-radius: 10px;
+            font-weight: 600;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        }
+
+        /* 5. Custom Primary Buttons Styling */
+        div.stButton > button {
+            width: 100%;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+
+        /* 6. Dark Mode Customizations */
         @media (prefers-color-scheme: dark) {
             .sticky-header {
-                background-color: #0e1117;
+                background: rgba(14, 17, 23, 0.95);
                 border-bottom: 2px solid #262730;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            }
+            .css-card {
+                background-color: #1e293b;
+                border: 1px solid #334155;
+            }
+            .stTabs [data-baseweb="tab"] {
+                background-color: #1e293b;
+                color: #94a3b8;
+                border: 1px solid #334155;
+            }
+            .stTabs [aria-selected="true"] {
+                background-color: #2563eb !important;
+                color: #ffffff !important;
             }
         }
     </style>
@@ -116,7 +177,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.0 Pro  
+    * **ជំនាន់ (Version):** 2.0 Pro (UI Enhanced)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube ។  
 
     ---
@@ -134,15 +195,15 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
        - គ្រូសធីកលើវេទិកាដែលចង់ផុស ហើយចុចប៊ូតុង **Upload** ជាការស្រេច!
     """)
 
-# --- MAIN INTERFACE (STICKY HEADER) ---
+# --- MAIN INTERFACE (FIXED STICKY HEADER) ---
 st.markdown("""
     <div class="sticky-header">
-        <h1 style="margin:0; font-size: 28px;">🚀 UNME AI Social Media</h1>
-        <p style="margin:0; color: gray; font-size: 14px;">ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube</p>
+        <h1 style="margin:0; font-size: 26px; font-weight: 700; color: #1e293b;">🚀 UNME AI Social Media</h1>
+        <p style="margin:2px 0 0 0; color: #64748b; font-size: 14px;">ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube (by Hab Rithy)</p>
     </div>
 """, unsafe_allow_html=True)
 
-# --- SEPARATE INTO TABS (ផ្ទាំងដាច់ដោយឡែកពីគ្នា រួមទាំង Support Chat) ---
+# --- SEPARATE INTO MODERN TABS ---
 tab1, tab2, tab3 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
@@ -150,11 +211,13 @@ tab1, tab2, tab3 = st.tabs([
 ])
 
 with tab1:
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
     # 1. Post Type & Media Input Section
     st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
     post_type = st.radio(
         "តើអ្នកចង់ផុសមាតិកាប្រភេទណា?", 
-        ["🎥 Video / Reels", "🖼️ Picture / Photo Posts"]
+        ["🎥 Video / Reels", "🖼️ Picture / Photo Posts"],
+        horizontal=True
     )
 
     media_file_path = None
@@ -173,7 +236,9 @@ with tab1:
             with open(media_file_path, "wb") as f:
                 f.write(uploaded_image.getbuffer())
             st.success(f"បានផ្ទុកឡើងរូបភាព៖ {uploaded_image.name}")
+    st.markdown('</div>', unsafe_allow_html=True)
 
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
     # 2. AI Caption Customization & Generation
     st.subheader(f"🤖 ការកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
     caption_prompt = st.text_area(
@@ -182,7 +247,7 @@ with tab1:
     )
 
     generated_caption = ""
-    if st.button(f"✨ បង្កើត Caption ដោយប្រើ {ai_provider}"):
+    if st.button(f"✨ បង្កើត Caption ដោយប្រើ {ai_provider}", type="primary"):
         if ai_provider == "Google Gemini":
             if 'gemini_api_key' in locals() and gemini_api_key:
                 try:
@@ -212,7 +277,9 @@ with tab1:
                 st.warning("សូមបញ្ចូល OpenAI API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន។")
 
     final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
+    st.markdown('</div>', unsafe_allow_html=True)
 
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
     # 3. Multi-Platform Selection
     st.subheader("🎬 ជ្រើសរើសវេទិកាសម្រាប់ការបញ្ជូន (Multi-Platform Selection)")
     col_a, col_b, col_c = st.columns(3)
@@ -223,8 +290,10 @@ with tab1:
     with col_c:
         pub_yt = st.checkbox("📺 YouTube")
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
     # 4. Execution Button
-    if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload ទៅកាន់ Platform"):
+    if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload ទៅកាន់ Platform", type="primary"):
         if media_file_path and os.path.exists(media_file_path):
             st.info("ប្រព័ន្ធកំពុងដំណើរការបញ្ជូនមាតិកា...")
             results = []
@@ -277,8 +346,10 @@ with tab1:
                     st.error(f"មានបញ្ហាក្នុងការកត់ត្រាចូល Google Sheets៖ {e}")
         else:
             st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab2:
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
     # --- VIEW HISTORY TABLE SECTION ---
     st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
 
@@ -318,15 +389,17 @@ with tab2:
                 st.error(f"មានបញ្ហាក្នុងការទាញយកទិន្នន័យពី Google Sheets៖ {e}")
         else:
             st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab3:
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
     # --- SUPPORT CHAT & AI ASSISTANT TAB ---
     st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support Chat & AI Assistant)")
     st.markdown("សួរសំណួរ ឬពិភាក្សាជាមួយ AI Support អំពីបញ្ហាបច្ចេកទេស ការប្រើប្រាស់ API ឬគន្លឹះផ្សេងៗក្នុងប្រព័ន្ធ **UNME AI Social Media**។")
 
     if "support_messages" not in st.session_state:
         st.session_state["support_messages"] = [
-            {"role": "assistant", "content": "សួស្ដី! ខ្ញុំជា Support AI Assistant របស់ UNME ។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
+            {"role": "assistant", "content": "សួស្ដី! ខ្ញុំជា Support AI Assistant របស់ UNME (by Hab Rithy)។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
         ]
 
     # បង្ហាញប្រវត្តិសារជជែក
@@ -357,3 +430,4 @@ with tab3:
                     err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
                     st.error(err_msg)
                     st.session_state["support_messages"].append({"role": "assistant", "content": err_msg})
+    st.markdown('</div>', unsafe_allow_html=True)
