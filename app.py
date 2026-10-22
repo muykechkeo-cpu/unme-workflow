@@ -540,9 +540,11 @@ with tab2:
                 hist_data = json.load(f)
             
             total_posts = len(hist_data)
-            fb_count = sum(1 for item in hist_data if any("Facebook" in str(r)) for r in item.get("results", []))
-            tiktok_count = sum(1 for item in hist_data if any("TikTok" in str(r)) for r in item.get("results", []))
-            yt_count = sum(1 for item in hist_data if any("YouTube" in str(r)) for r in item.get("results", []))
+            
+            # កែប្រែកូដរាប់ចំនួន Posts តាម Platform ឱ្យត្រឹមត្រូវ
+            fb_count = sum(1 for item in hist_data for r in item.get("results", []) if "Facebook" in str(r))
+            tiktok_count = sum(1 for item in hist_data for r in item.get("results", []) if "TikTok" in str(r))
+            yt_count = sum(1 for item in hist_data for r in item.get("results", []) if "YouTube" in str(r))
 
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("📌 ការផុសសរុប", total_posts)
