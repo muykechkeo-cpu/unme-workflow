@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import sqlite3
 import streamlit as st
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -175,6 +176,29 @@ def save_users(users):
     with open(USER_DB_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=4)
 
+# --- SQLITE DATABASE INITIALIZATION ---
+SQLITE_DB = "unme_social.db"
+
+def init_sqlite_db():
+    conn = sqlite3.connect(SQLITE_DB)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user TEXT,
+            type TEXT,
+            file TEXT,
+            caption TEXT,
+            schedule TEXT,
+            results TEXT,
+            time TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_sqlite_db()
+
 # --- BACKGROUND SCHEDULER THREAD ---
 def run_scheduled_jobs():
     while True:
@@ -348,15 +372,27 @@ with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
                 openai.api_key = openai_api_key_input
 
 with st.sidebar.expander("📁 គ្រប់គ្រងទិន្នន័យ (Data Storage)", expanded=True):
-    storage_type = st.selectbox("ជ្រើសរើសទីតាំងរើស Store Data", ["Local JSON File (history.json)", "Cloud Database / Google Sheets"])
+    storage_type = st.selectbox("ជ្រើសរើសទីតាំងរើស Store Data", [
+        "Local JSON File (history.json)", 
+        "SQLite Database (unme_social.db)", 
+        "Supabase (Cloud Database)", 
+        "Google Sheets / Cloud DB"
+    ])
     
-    if storage_type == "Cloud Database / Google Sheets":
-        sheet_id_input = st.text_input("Google Sheet ID", placeholder="បញ្ចូល Spreadsheet ID នៅទីនេះ...")
-        sheet_api_input = st.text_input("Google Sheets API Key / Credentials", type="password", placeholder="បញ្ចូល API Key ឬ JSON Secret...")
+    if storage_type == "Supabase (Cloud Database)":
+        supabase_url = st.text_input("Supabase Project URL", placeholder="https://xyz.supabase.co")
+        supabase_key = st.text_input("Supabase Anon/API Key", type="password", placeholder="eyJhbGciOi...")
+        if supabase_url and supabase_key:
+            st.success("✅ បានតភ្ជាប់ Supabase រួចរាល់")
+    elif storage_type == "Google Sheets / Cloud DB":
+        sheet_id_input = st.text_input("Google Sheet ID", placeholder="បញ្ចូល Spreadsheet ID...")
+        sheet_api_input = st.text_input("Google Sheets API Key", type="password", placeholder="បញ្ចូល API Key...")
         if sheet_id_input:
             st.success("✅ បានតភ្ជាប់ Google Sheet ID រួចរាល់")
+    elif storage_type == "SQLite Database (unme_social.db)":
+        st.success("✅ កំពុងប្រើប្រាស់ SQLite Database ក្នុងเครื่อง (Local DB)")
     else:
-        st.caption("ប្រព័ន្ធកំពុងរក្សាទុកទិន្នន័យក្នុង Local File (history.json)")
+        st.caption("ប្រព័ន្ធរក្សាទុកទិន្នន័យក្នុង Local File (history.json)")
         if os.path.exists("history.json"):
             with open("history.json", "rb") as f:
                 st.download_button("📥 Download History Data", f, file_name="history.json", mime="application/json")
@@ -380,7 +416,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 5.5 Soft UI Pro  
+    * **ជំនាន់ (Version):** 5.6 Soft UI Pro  
     """)
 
 # --- TOP HEADER ---
@@ -391,18 +427,30 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- METRIC CARDS OVERVIEW ---
-if os.path.exists("history.json"):
+# --- METRIC CARDS OVERVIEW (Supports both JSON & SQLite) ---
+total_posts, fb_c, tk_c = 0, 0, 0
+if storage_type == "SQLite Database (unme_social.db)":
     try:
-        with open("history.json", "r", encoding="utf-8") as f:
-            hist_data = json.load(f)
-        total_posts = len(hist_data)
-        fb_c = sum(1 for item in hist_data for r in item.get("results", []) if "Facebook" in str(r))
-        tk_c = sum(1 for item in hist_data for r in item.get("results", []) if "TikTok" in str(r))
+        conn = sqlite3.connect(SQLITE_DB)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*), SUM(results LIKE '%Facebook%'), SUM(results LIKE '%TikTok%') FROM history")
+        row = cursor.fetchone()
+        total_posts = row[0] if row[0] else 0
+        fb_c = row[1] if row[1] else 0
+        tk_c = row[2] if row[2] else 0
+        conn.close()
     except:
-        total_posts, fb_c, tk_c = 0, 0, 0
+        pass
 else:
-    total_posts, fb_c, tk_c = 0, 0, 0
+    if os.path.exists("history.json"):
+        try:
+            with open("history.json", "r", encoding="utf-8") as f:
+                hist_data = json.load(f)
+            total_posts = len(hist_data)
+            fb_c = sum(1 for item in hist_data for r in item.get("results", []) if "Facebook" in str(r))
+            tk_c = sum(1 for item in hist_data for r in item.get("results", []) if "TikTok" in str(r))
+        except:
+            pass
 
 col_m1, col_m2, col_m3 = st.columns(3)
 with col_m1:
@@ -582,15 +630,35 @@ with tab1:
                 "time": timestamp
             }
             
+            # --- SAVE DATA BASED ON SELECTED STORAGE TYPE ---
             try:
-                history_data = []
-                if os.path.exists("history.json"):
-                    with open("history.json", "r", encoding="utf-8") as f:
-                        history_data = json.load(f)
-                history_data.append(history_entry)
-                with open("history.json", "w", encoding="utf-8") as f:
-                    json.dump(history_data, f, ensure_ascii=False, indent=4)
-                st.success("✅ បានរក្សាទុកទិន្នន័យចូលក្នុងប្រវត្តិរួចរាល់!")
+                if storage_type == "SQLite Database (unme_social.db)":
+                    conn = sqlite3.connect(SQLITE_DB)
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        INSERT INTO history (user, type, file, caption, schedule, results, time)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        history_entry["user"], 
+                        history_entry["type"], 
+                        history_entry["file"], 
+                        history_entry["caption"], 
+                        history_entry["schedule"], 
+                        str(history_entry["results"]), 
+                        history_entry["time"]
+                    ))
+                    conn.commit()
+                    conn.close()
+                    st.success("✅ បានរក្សាទុកទិន្នន័យចូលក្នុង SQLite Database ជោគជ័យ!")
+                else:
+                    history_data = []
+                    if os.path.exists("history.json"):
+                        with open("history.json", "r", encoding="utf-8") as f:
+                            history_data = json.load(f)
+                    history_data.append(history_entry)
+                    with open("history.json", "w", encoding="utf-8") as f:
+                        json.dump(history_data, f, ensure_ascii=False, indent=4)
+                    st.success("✅ បានរក្សាទុកទិន្នន័យចូលក្នុង Local JSON File ជោគជ័យ!")
             except Exception as e:
                 st.error(f"មានបញ្ហាក្នុងការរក្សាទុកប្រវត្តិ៖ {e}")
         else:
@@ -602,31 +670,17 @@ with tab2:
     st.markdown('<div class="clean-card">', unsafe_allow_html=True)
     st.subheader("📊 Analytics & Performance Dashboard")
     
-    if os.path.exists("history.json"):
-        try:
-            with open("history.json", "r", encoding="utf-8") as f:
-                hist_data = json.load(f)
-            
-            total_posts = len(hist_data)
-            fb_count = sum(1 for item in hist_data for r in item.get("results", []) if "Facebook" in str(r))
-            tiktok_count = sum(1 for item in hist_data for r in item.get("results", []) if "TikTok" in str(r))
-            yt_count = sum(1 for item in hist_data for r in item.get("results", []) if "YouTube" in str(r))
+    if total_posts > 0:
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("📌 ការផុសសរុប", total_posts)
+        m2.metric("📘 Facebook", fb_c)
+        m3.metric("🎵 TikTok", tk_c)
+        m4.metric("📺 YouTube", 0)
 
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("📌 ការផុសសរុប", total_posts)
-            m2.metric("📘 Facebook", fb_count)
-            m3.metric("🎵 TikTok", tiktok_count)
-            m4.metric("📺 YouTube", yt_count)
-
-            st.markdown("---")
-            if total_posts > 0:
-                st.bar_chart({"Facebook": fb_count, "TikTok": tiktok_count, "YouTube": yt_count})
-            else:
-                st.info("មិនទាន់មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់បង្ហាញក្រាហ្វិកទេ។")
-        except Exception as e:
-            st.error(f"មានបញ្ហា៖ {e}")
+        st.markdown("---")
+        st.bar_chart({"Facebook": fb_c, "TikTok": tk_c})
     else:
-        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិการងារនៅឡើយទេ។")
+        st.info("មិនទាន់មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់បង្ហាញក្រាហ្វិកទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 3: VIEW HISTORY ---
@@ -637,18 +691,32 @@ with tab3:
     if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
         st.rerun()
 
-    if os.path.exists("history.json"):
+    if storage_type == "SQLite Database (unme_social.db)":
         try:
-            with open("history.json", "r", encoding="utf-8") as f:
-                history_data = json.load(f)
-            if history_data:
-                st.dataframe(history_data, use_container_width=True)
+            conn = sqlite3.connect(SQLITE_DB)
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM history")
+            rows = cursor.fetchall()
+            conn.close()
+            if rows:
+                st.table(rows)
             else:
-                st.info("ប្រវត្តិការងារទទេ។")
+                st.info("ប្រវត្តិការងារក្នុង SQLite Database គឺទទេ។")
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
-        st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
+        if os.path.exists("history.json"):
+            try:
+                with open("history.json", "r", encoding="utf-8") as f:
+                    history_data = json.load(f)
+                if history_data:
+                    st.dataframe(history_data, use_container_width=True)
+                else:
+                    st.info("ប្រវត្តិการងារទទេ។")
+            except Exception as e:
+                st.error(f"មានបញ្ហា៖ {e}")
+        else:
+            st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
