@@ -22,43 +22,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- USER ACCOUNTS & ROLES DATABASE ---
-# អ្នកអាចបន្ថែម User/Password និង Role (admin / member) នៅទីនេះ
-USER_DB = {
-    "admin": {
-        "name": "Hab Rithy (Admin)",
-        "password": "admin123", # គួរផ្លាស់ប្តូរ Password នេះ
-        "role": "admin"
-    },
-    "staff": {
-        "name": "Content Creator",
-        "password": "staff123",
-        "role": "member"
-    }
-}
-
-# --- AUTHENTICATION SESSION MANAGEMENT ---
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
-    st.session_state["username"] = ""
-    st.session_state["user_role"] = ""
-    st.session_state["user_fullname"] = ""
-
-def login_user(username, password):
-    if username in USER_DB and USER_DB[username]["password"] == password:
-        st.session_state["logged_in"] = True
-        st.session_state["username"] = username
-        st.session_state["user_role"] = USER_DB[username]["role"]
-        st.session_state["user_fullname"] = USER_DB[username]["name"]
-        return True
-    return False
-
-def logout_user():
-    st.session_state["logged_in"] = False
-    st.session_state["username"] = ""
-    st.session_state["user_role"] = ""
-    st.session_state["user_fullname"] = ""
-
 # --- MODERN ADVANCED CUSTOM CSS FOR UI STYLING ---
 st.markdown("""
     <style>
@@ -135,29 +98,43 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- LOGIN SCREEN IF NOT LOGGED IN ---
+# --- USER ACCOUNTS CONFIGURATION (DATABASE / DICTIONARY) ---
+# អ្នកអាចបន្ថែម User/Password និង Role នៅទីនេះ (ឬអានចេញពី database)
+USER_DATABASE = {
+    "admin": {"password": "adminpassword", "name": "Hab Rithy (Admin)", "role": "admin"},
+    "user1": {"password": "user123", "name": "Standard User", "role": "user"}
+}
+
+# --- AUTHENTICATION STATE HANDLING ---
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+    st.session_state["user_info"] = None
+
+# --- LOGIN FORM INTERFACE ---
 if not st.session_state["logged_in"]:
-    st.markdown("""
-        <div style="text-align: center; padding-top: 50px;">
-            <h1>🚀 UNME AI Social Media</h1>
-            <p style="color: gray;">សូមចូលប្រើប្រាស់ប្រព័ន្ធ (System Login)</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    col_l1, col_l2, col_l3 = st.columns([1, 2, 1])
-    with col_l2:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
         st.markdown('<div class="css-card">', unsafe_allow_html=True)
-        login_user_input = st.text_input("👤 ឈ្មោះអ្នកប្រើប្រាស់ (Username)")
-        login_pass_input = st.text_input("🔑 ពាក្យសម្ងាត់ (Password)", type="password")
+        st.title("🔐 UNME AI Social Media Login")
+        st.markdown("សូមបញ្ចូល Username និង Password ដើម្បីចូលប្រើប្រាស់ប្រព័ន្ធ (by Hab Rithy)")
+        
+        username_input = st.text_input("Username")
+        password_input = st.text_input("Password", type="password")
         
         if st.button("🔓 ចូលប្រព័ន្ធ (Login)", type="primary"):
-            if login_user(login_user_input, login_pass_input):
+            if username_input in USER_DATABASE and USER_DATABASE[username_input]["password"] == password_input:
+                st.session_state["logged_in"] = True
+                st.session_state["user_info"] = USER_DATABASE[username_input]
                 st.success("ចូលប្រព័ន្ធជោគជ័យ!")
                 st.rerun()
             else:
-                st.error("ឈ្មោះ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ!")
+                st.error("Username ឬ Password មិនត្រឹមត្រូវឡើយ!")
         st.markdown('</div>', unsafe_allow_html=True)
-    st.stop()  # បញ្ឈប់ការ Run កូដខាងក្រោមប្រសិនបើមិនទាន់ Login
+    st.stop()  # បញ្ឈប់កូដខាងក្រោមមិនឱ្យដំណើរការ រហូតទាល់តែ Login រួច
+
+# --- USER LOGGED IN DATA ---
+current_user = st.session_state["user_info"]
 
 # --- MEDIA PROCESSING FUNCTIONS (WATERMARK & EDITING) ---
 def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
@@ -227,12 +204,13 @@ if 'scheduler_started' not in st.session_state:
     bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
     bg_thread.start()
 
-# --- SIDEBAR CONFIGURATION (ROLE RESTRICTED) ---
-st.sidebar.title("⚙️ System Configuration")
-st.sidebar.info(f"👤 **{st.session_state['user_fullname']}**\n\n🛡️ Role: **{st.session_state['user_role'].upper()}**")
+# --- SIDEBAR CONFIGURATION (ROLE-BASED PERMISSIONS) ---
+st.sidebar.title(f"👤 {current_user['name']}")
+st.sidebar.caption(f"Role: {current_user['role'].upper()}")
 
 if st.sidebar.button("🚪 ចាកចេញពីប្រព័ន្ធ (Logout)"):
-    logout_user()
+    st.session_state["logged_in"] = False
+    st.session_state["user_info"] = None
     st.rerun()
 
 st.sidebar.markdown("---")
@@ -242,51 +220,57 @@ storage_mode = st.sidebar.selectbox(
     ["Local history.json", "Google Sheets"]
 )
 
-st.sidebar.markdown("---")
-
-# 1. AI Provider Selection Expander
+# ផ្ទៀងផ្ទាត់៖ លុះត្រាតែជា Admin ទើបអាចមើលឃើញ ឬកំណត់ API Settings ទាំងអស់ក្នុង Sidebar
+gsheet_json = ""
+gsheet_url = ""
+gemini_api_key = ""
+openai_api_key = ""
 ai_provider = "Google Gemini"
-gemini_api_key = os.getenv("GEMINI_API_KEY", "")
-openai_api_key = os.getenv("OPENAI_API_KEY", "")
-gsheet_json = os.getenv("GSHEET_JSON", "")
-gsheet_url = os.getenv("GSHEET_URL", "")
 
-# ប្រសិនបើជា Admin ទើបបង្ហាញ Expanders សម្រាប់កែ API Credentials
-if st.session_state["user_role"] == "admin":
-    with st.sidebar.expander("🤖 AI Provider Settings (Admin Only)", expanded=True):
+if current_user["role"] == "admin":
+    st.sidebar.title("⚙️ System Configuration (Admin Only)")
+
+    # 1. AI Provider Selection Expander
+    with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
         ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
         if ai_provider == "Google Gemini":
-            gemini_api_key = st.text_input("Google Gemini API Key", value=gemini_api_key, type="password")
+            gemini_api_key = st.text_input("Google Gemini API Key", type="password")
             if gemini_api_key:
                 genai.configure(api_key=gemini_api_key)
         else:
-            openai_api_key = st.text_input("OpenAI API Key", value=openai_api_key, type="password")
+            openai_api_key = st.text_input("OpenAI API Key", type="password")
             if openai_api_key:
                 openai.api_key = openai_api_key
 
-    with st.sidebar.expander("📊 Google Sheets Configuration (Admin Only)", expanded=False):
-        gsheet_json = st.text_area("Service Account JSON Key", value=gsheet_json)
-        gsheet_url = st.text_input("Spreadsheet URL / ID", value=gsheet_url)
+    # 2. Google Sheets Configuration Expander
+    with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
+        gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
+        gsheet_url = st.text_input("Spreadsheet URL / ID")
 
-    with st.sidebar.expander("📘 Facebook Credentials (Admin Only)", expanded=False):
+    # 3. Facebook Credentials Expander
+    with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
         fb_page_id = st.text_input("Facebook Page ID")
         fb_access_token = st.text_input("Facebook Access Token / API", type="password")
 
-    with st.sidebar.expander("🎵 TikTok Credentials (Admin Only)", expanded=False):
+    # 4. TikTok Credentials Expander
+    with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
         tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
 
-    with st.sidebar.expander("📺 YouTube Credentials (Admin Only)", expanded=False):
+    # 5. YouTube Credentials Expander
+    with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
         yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-    with st.sidebar.expander("🔔 Telegram Notification Settings (Admin Only)", expanded=False):
+    # 6. Telegram Notification Settings Expander
+    with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
         tg_token = st.text_input("Telegram Bot Token", type="password")
         tg_chat_id = st.text_input("Telegram Chat ID")
 
-    with st.sidebar.expander("⏰ Background Scheduler Settings (Admin Only)", expanded=False):
+    # 7. Background Scheduler Settings Expander
+    with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
         schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
         st.caption("មុខងារ Auto Scheduler កំពុងដំណើរការក្នុងប្រព័ន្ធផ្ទៃខាងក្រោយ។")
 else:
-    st.sidebar.caption("🔒 ផ្នែកកែសម្រួល API Keys ត្រូវបានការពារ (សំរាប់តែ Admin)។")
+    st.sidebar.info("🔒 គណនីរបស់អ្នកជា Standard User។ ផ្នែកកំណត់ API ត្រូវបានរក្សាសុវត្ថិភាពដោយ Admin។")
 
 # --- ABOUT & HOW TO USE SECTION IN SIDEBAR ---
 st.sidebar.markdown("---")
@@ -295,14 +279,15 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.3 Pro (Multi-User RBAC Enabled)  
+    * **ជំនាន់ (Version):** 2.3 Pro (Authentication Enabled)  
+    * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
 # --- MAIN INTERFACE (FIXED STICKY HEADER) ---
-st.markdown(f"""
+st.markdown("""
     <div class="sticky-header">
         <h1 style="margin:0; font-size: 26px; font-weight: 700; color: #1e293b;">🚀 UNME AI Social Media</h1>
-        <p style="margin:2px 0 0 0; color: #64748b; font-size: 14px;">ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI (by Hab Rithy) | គណនីបច្ចុប្បន្ន៖ <b>{st.session_state['user_fullname']}</b></p>
+        <p style="margin:2px 0 0 0; color: #64748b; font-size: 14px;">ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube (by Hab Rithy)</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -371,10 +356,225 @@ with tab1:
     generated_caption = ""
     if st.button(f"✨ បង្កើត Caption ដោយប្រើ {ai_provider}", type="primary"):
         if ai_provider == "Google Gemini":
-            if gemini_api_key:
+            if 'gemini_api_key' in locals() and gemini_api_key:
                 try:
-                    genai.configure(api_key=gemini_api_key)
                     model = genai.GenerativeModel('gemini-1.5-flash')
                     response = model.generate_content(f"Write a social media caption and hashtags based on this prompt: {caption_prompt}")
                     generated_caption = response.text
-                    st
+                    st.success("AI (Gemini) បានបង្កើត Caption រួចរាល់!")
+                    st.write(generated_caption)
+                except Exception as e:
+                    st.error(f"មានកំហុសក្នុងការតភ្ជាប់ Gemini AI៖ {e}")
+            else:
+                st.warning("សូមបញ្ចូល Google Gemini API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន (ឬទាក់ទង Admin)។")
+        else:
+            if 'openai_api_key' in locals() and openai_api_key:
+                try:
+                    client = openai.OpenAI(api_key=openai_api_key)
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[{"role": "user", "content": f"Write a social media caption and hashtags based on this prompt: {caption_prompt}"}]
+                    )
+                    generated_caption = response.choices[0].message.content
+                    st.success("AI (ChatGPT) បានបង្កើត Caption រួចរាល់!")
+                    st.write(generated_caption)
+                except Exception as e:
+                    st.error(f"មានកំហុសក្នុងការតភ្ជាប់ OpenAI API៖ {e}")
+            else:
+                st.warning("សូមបញ្ចូល OpenAI API Key នៅ Sidebar ខាងឆ្វេងជាមុនសិន (ឬទាក់ទង Admin)។")
+
+    final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.subheader("🎬 ជ្រើសរើសវេទិកាសម្រាប់ការបញ្ជូន (Multi-Platform Selection)")
+    col_a, col_b, col_c = st.columns(3)
+    with col_a:
+        pub_fb = st.checkbox("📘 Facebook", value=True)
+    with col_b:
+        pub_tiktok = st.checkbox("🎵 TikTok")
+    with col_c:
+        pub_yt = st.checkbox("📺 YouTube")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload ទៅកាន់ Platform", type="primary"):
+        if media_file_path and os.path.exists(media_file_path):
+            st.info("ប្រព័ន្ធកំពុងដំណើរការបញ្ជូនមាតិកា...")
+            results = []
+            
+            if pub_fb:
+                res_fb = upload_to_facebook(media_file_path, final_caption, post_type=post_type)
+                results.append(res_fb)
+            if pub_tiktok:
+                res_tk = upload_to_tiktok(media_file_path, final_caption)
+                results.append(res_tk)
+            if pub_yt:
+                res_yt = upload_to_youtube(media_file_path, "AI Generated Content", final_caption)
+                results.append(res_yt)
+                
+            st.success("ការបញ្ជូនបានបញ្ចប់!")
+            st.json(results)
+            
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            history_entry = {
+                "user": current_user["name"],
+                "type": post_type, 
+                "file": media_file_path, 
+                "caption": final_caption, 
+                "results": results, 
+                "time": timestamp
+            }
+            
+            try:
+                if os.path.exists("history.json"):
+                    with open("history.json", "r", encoding="utf-8") as f:
+                        history_data = json.load(f)
+                else:
+                    history_data = []
+                    
+                history_data.append(history_entry)
+                with open("history.json", "w", encoding="utf-8") as f:
+                    json.dump(history_data, f, ensure_ascii=False, indent=4)
+                st.info("✅ បានរក្សាទុកប្រវត្តិក្នុង Local history.json រួចរាល់។")
+            except Exception as e:
+                st.error(f"មានបញ្ហាក្នុងការរក្សាទុក Local history.json៖ {e}")
+                
+            if gsheet_json and gsheet_url:
+                try:
+                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+                    creds_dict = json.loads(gsheet_json)
+                    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+                    client = gspread.authorize(creds)
+                    
+                    sheet = client.open_by_url(gsheet_url).sheet1
+                    sheet.append_row([current_user["name"], post_type, media_file_path, final_caption, str(results), timestamp])
+                    
+                    st.success("✅ បានកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
+                except Exception as e:
+                    st.error(f"មានបញ្ហាក្នុងការកត់ត្រាចូល Google Sheets៖ {e}")
+        else:
+            st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- TAB 2: ANALYTICS DASHBOARD ---
+with tab2:
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.subheader("📊 Analytics & Performance Dashboard")
+    st.markdown("ផ្ទាំងបង្ហាញស្ថិតិ និងការវិភាគទូទៅនៃការបញ្ជូនមាតិកាទៅកាន់ Social Media Platforms។")
+
+    if os.path.exists("history.json"):
+        try:
+            with open("history.json", "r", encoding="utf-8") as f:
+                hist_data = json.load(f)
+            
+            total_posts = len(hist_data)
+            fb_count = sum(1 for item in hist_data if any("Facebook" in str(r)) for r in item.get("results", []))
+            tiktok_count = sum(1 for item in hist_data if any("TikTok" in str(r)) for r in item.get("results", []))
+            yt_count = sum(1 for item in hist_data if any("YouTube" in str(r)) for r in item.get("results", []))
+
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("📌 ការផុសសរុប (Total Posts)", total_posts)
+            m2.metric("📘 Facebook Posts", fb_count)
+            m3.metric("🎵 TikTok Posts", tiktok_count)
+            m4.metric("📺 YouTube Posts", yt_count)
+
+            st.markdown("---")
+            st.subheader("📈 ប្រវត្តិនៃការប្រើប្រាស់តាមវេទិកា")
+            
+            if total_posts > 0:
+                st.bar_chart({
+                    "Facebook": fb_count,
+                    "TikTok": tiktok_count,
+                    "YouTube": yt_count
+                })
+            else:
+                st.info("មិនទាន់មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់បង្ហាញជាក្រាហ្វិក (Chart) ទេ។")
+
+        except Exception as e:
+            st.error(f"មានបញ្ហាក្នុងការអានទិន្នន័យសម្រាប់ Analytics៖ {e}")
+    else:
+        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារ (history.json) នៅឡើយទេ។ សូមធ្វើការ Upload មាតិកាសិន។")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- TAB 3: VIEW HISTORY ---
+with tab3:
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
+
+    if st.button("🔄 ផ្ទុកទិន្នន័យប្រវត្តិការងារឡើងវិញ"):
+        st.rerun()
+
+    if storage_mode == "Local history.json":
+        if os.path.exists("history.json"):
+            try:
+                with open("history.json", "r", encoding="utf-8") as f:
+                    history_data = json.load(f)
+                if history_data:
+                    st.dataframe(history_data, use_container_width=True)
+                else:
+                    st.info("មិនទាន់មានប្រវត្តិការងារក្នុង Local history.json នៅឡើយទេ។")
+            except Exception as e:
+                st.error(f"មានបញ្ហាក្នុងការអានឯកសារ history.json៖ {e}")
+        else:
+            st.info("មិនទាន់មានឯកសារ history.json ទេ។")
+
+    elif storage_mode == "Google Sheets":
+        if gsheet_json and gsheet_url:
+            try:
+                scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+                creds_dict = json.loads(gsheet_json)
+                creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+                client = gspread.authorize(creds)
+                
+                sheet = client.open_by_url(gsheet_url).sheet1
+                records = sheet.get_all_records()
+                
+                if records:
+                    st.dataframe(records, use_container_width=True)
+                else:
+                    st.info("Google Sheet របស់អ្នកនៅទទេ។")
+            except Exception as e:
+                st.error(f"មានបញ្ហាក្នុងការទាញយកទិន្នន័យពី Google Sheets៖ {e}")
+        else:
+            st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- TAB 4: SUPPORT CHAT ---
+with tab4:
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support Chat & AI Assistant)")
+    st.markdown("សួរសំណួរ ឬពិភាក្សាជាមួយ AI Support អំពីបញ្ហាបច្ចេកទេស ការប្រើប្រាស់ API ឬគន្លឹះផ្សេងៗក្នុងប្រព័ន្ធ **UNME AI Social Media**។")
+
+    if "support_messages" not in st.session_state:
+        st.session_state["support_messages"] = [
+            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant របស់ UNME (by Hab Rithy)។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
+        ]
+
+    for msg in st.session_state["support_messages"]:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីនេះ..."):
+        st.session_state["support_messages"].append({"role": "user", "content": user_query})
+        with st.chat_message("user"):
+            st.markdown(user_query)
+
+        with st.chat_message("assistant"):
+            with st.spinner("កំពុងពិចារណា..."):
+                try:
+                    if 'gemini_api_key' in locals() and gemini_api_key:
+                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media built by Hab Rithy'. Answer the user's question professionally: {user_query}")
+                        bot_reply = chat_response.text
+                    else:
+                        bot_reply = "សូមបញ្ចូល Google Gemini API Key នៅផ្នែក Sidebar ខាងឆ្វេងជាមុនសិន (ឬទាក់ទង Admin) ដើម្បីឱ្យ Support AI អាចដំណើរការឆ្លើយតបបាន។"
+                    
+                    st.markdown(bot_reply)
+                    st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
+                except Exception as e:
+                    err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
+                    st.error(err_msg)
+                    st.session_state["support_messages"].append({"role": "assistant", "content": err_msg})
+    st.markdown('</div>', unsafe_allow_html=True)
