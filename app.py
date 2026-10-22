@@ -68,7 +68,7 @@ st.markdown("""
             color: #000000 !important;
         }
 
-        /* Force Login Box and text inside it to WHITE / Dark Neon */
+        /* Force Login Box and text inside it to WHITE */
         .auth-box {
             background: #111827 !important;
             padding: 40px;
@@ -154,14 +154,14 @@ st.markdown("""
             border-radius: 10px;
             font-weight: 600;
             padding: 10px 24px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
             border: none;
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
             transition: all 0.3s ease;
         }
         div.stButton > button:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #1d4ed8 100%, #1e40af 100%);
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
             transform: translateY(-2px);
         }
@@ -390,7 +390,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 4.7 Dark Neon Pro  
+    * **ជំនាន់ (Version):** 4.8 Dark Neon Pro  
     """)
 
 # --- TOP HEADER ---
@@ -658,7 +658,7 @@ with tab3:
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
-        st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
+        st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
