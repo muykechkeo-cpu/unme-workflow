@@ -5,8 +5,6 @@ import streamlit as st
 from dotenv import load_dotenv
 import google.generativeai as genai
 import openai
-import gspread
-from google.oauth2.service_account import Credentials
 import datetime
 import time
 import threading
@@ -30,90 +28,136 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- MODERN ADVANCED CUSTOM CSS FOR UI STYLING & GRAY BACKGROUND ---
+# --- ADVANCED HTML/CSS/JS CUSTOM UI DESIGN ---
 st.markdown("""
     <style>
+        /* Global Reset & Font Smoothing */
+        html, body, [class*="css"] {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
         .block-container {
-            padding-top: 1.2rem !important;
-            padding-bottom: 2.5rem !important;
+            padding-top: 1rem !important;
+            padding-bottom: 3rem !important;
             max-width: 95% !important;
         }
+        
+        /* Modern Glassmorphism Sticky Header */
         .sticky-header {
             position: sticky;
             top: 0px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 99999;
-            padding: 12px 20px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eef2f6;
-            border-radius: 0 0 12px 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            animation: fadeInDown 0.5s ease-out;
         }
-        .css-card {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid #eef2f6;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-            margin-bottom: 20px;
+
+        /* Custom Modern Cards */
+        .custom-card {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 24px;
         }
-        .auth-card-gray {
-            background: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
-            padding: 35px;
-            border-radius: 18px;
+        .custom-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.08);
+            border-color: #cbd5e1;
+        }
+
+        /* Auth Login/Signup Card Styling */
+        .auth-container {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 40px;
+            border-radius: 20px;
             border: 1px solid #cbd5e1;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-            margin-top: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+            animation: zoomIn 0.4s ease-out;
         }
+
+        /* Tabs Styling Enhancement */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 12px;
+            gap: 10px;
+            background-color: #f1f5f9;
+            padding: 6px;
+            border-radius: 12px;
         }
         .stTabs [data-baseweb="tab"] {
-            height: 48px;
-            padding: 0px 24px;
-            background-color: #f8fafc;
-            border-radius: 10px;
+            height: 46px;
+            padding: 0px 20px;
+            background-color: transparent;
+            border-radius: 8px;
             font-weight: 600;
-            color: #475569;
-            border: 1px solid #e2e8f0;
+            color: #64748b;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        .stTabs [data-baseweb="tab"]:hover {
+            color: #2563eb;
+            background-color: rgba(255, 255, 255, 0.6);
         }
         .stTabs [aria-selected="true"] {
             background-color: #2563eb !important;
             color: #ffffff !important;
-            border-color: #2563eb !important;
-            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
+
+        /* Custom Styled Buttons */
         div.stButton > button {
             width: 100%;
             border-radius: 10px;
             font-weight: 600;
-            padding: 10px 20px;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
             transition: all 0.3s ease;
         }
+        div.stButton > button:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+            transform: translateY(-1px);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Dark Mode Support */
         @media (prefers-color-scheme: dark) {
             .sticky-header {
-                background: rgba(14, 17, 23, 0.95);
-                border-bottom: 2px solid #262730;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                background: rgba(15, 23, 42, 0.85);
+                border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             }
-            .css-card {
+            .custom-card {
                 background-color: #1e293b;
                 border: 1px solid #334155;
             }
-            .auth-card-gray {
-                background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+            .auth-container {
+                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
                 border: 1px solid #334155;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            }
+            .stTabs [data-baseweb="tab-list"] {
+                background-color: #0f172a;
             }
             .stTabs [data-baseweb="tab"] {
-                background-color: #1e293b;
                 color: #94a3b8;
-                border: 1px solid #334155;
-            }
-            .stTabs [aria-selected="true"] {
-                background-color: #2563eb !important;
-                color: #ffffff !important;
             }
         }
     </style>
@@ -155,13 +199,14 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
-# --- DIRECT SIGN IN / SIGN UP INTERFACE (NO OTP) ---
+# --- MODERN AUTH INTERFACE (HTML/CSS WRAPPED) ---
 if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown('<div class="auth-card-gray">', unsafe_allow_html=True)
-        st.title("🚀 UNME AI Social Media")
+        st.markdown('<div class="auth-container">', unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #2563eb; margin-bottom: 10px;'>🚀 UNME AI Social Media</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748b; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធស្វ័យប្រវត្តិកម្មទំនើប (by Hab Rithy)</p>", unsafe_allow_html=True)
         
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["🔑 ចូលប្រព័ន្ធ (Sign In)", "📝 ចុះឈ្មោះ (Sign Up)"], horizontal=True)
         st.markdown("<br>", unsafe_allow_html=True)
@@ -169,9 +214,9 @@ if not st.session_state["logged_in"]:
         users_db = load_users()
 
         if auth_mode == "🔑 ចូលប្រព័ន្ធ (Sign In)":
-            st.subheader("ចូលប្រព័ន្ធរបស់អ្នក")
             signin_email = st.text_input("អ៊ីមែល (Email Address)", placeholder="example@gmail.com").strip().lower()
             signin_pass = st.text_input("ពាក្យសម្ងាត់ (Password)", type="password")
+            st.markdown("<br>", unsafe_allow_html=True)
             
             if st.button("🔓 ចូលប្រព័ន្ធ (Sign In)", type="primary"):
                 if not signin_email or not signin_pass:
@@ -186,11 +231,11 @@ if not st.session_state["logged_in"]:
                 else:
                     st.error("អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ!")
         
-        else:  # Direct Sign Up Mode (Without OTP)
-            st.subheader("បង្កើតគណនីថ្មី (Sign Up)")
+        else:  
             signup_name = st.text_input("ឈ្មោះពេញ / Full Name", key="su_name")
             signup_email = st.text_input("អាសយដ្ឋានអ៊ីមែល (Email Address)", placeholder="example@gmail.com", key="su_email").strip().lower()
             signup_pass = st.text_input("បង្កើតពាក្យសម្ងាត់ (Choose Password)", type="password", key="su_pass")
+            st.markdown("<br>", unsafe_allow_html=True)
             
             if st.button("✨ ចុះឈ្មោះ និងចូលប្រព័ន្ធភ្លាមៗ", type="primary"):
                 if not signup_name or not signup_email or not signup_pass:
@@ -223,7 +268,7 @@ if not st.session_state["logged_in"]:
 
 current_user = st.session_state["user_info"]
 
-# --- MEDIA PROCESSING FUNCTIONS (WATERMARK & EDITING) ---
+# --- MEDIA PROCESSING FUNCTIONS ---
 def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
     try:
         image = Image.open(input_path).convert("RGBA")
@@ -281,15 +326,6 @@ def process_video_watermark(input_path, output_path, watermark_text="UNME AI"):
         print(f"Error processing video watermark: {e}")
         return input_path
 
-def run_scheduled_jobs():
-    while True:
-        time.sleep(60)
-
-if 'scheduler_started' not in st.session_state:
-    st.session_state['scheduler_started'] = True
-    bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
-    bg_thread.start()
-
 # --- SIDEBAR CONFIGURATION ---
 st.sidebar.title(f"👤 {current_user['name']}")
 st.sidebar.caption(f"Email: {current_user['email']}")
@@ -300,39 +336,29 @@ if st.sidebar.button("🚪 ចាកចេញពីប្រព័ន្ធ (Log
     st.rerun()
 
 st.sidebar.markdown("---")
-
-storage_mode = st.sidebar.selectbox(
-    "📁 History Display Mode (ជ្រើសរើសប្រភេទបង្ហាញលើតារាង)",
-    ["Local history.json", "Google Sheets"]
-)
-
 st.sidebar.title("⚙️ System Configuration")
 
 with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
     ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
     if ai_provider == "Google Gemini":
         if GEMINI_API_KEY:
-            st.success("✅ Gemini API Key បានផ្ទុកស្រាប់ពី System Secrets")
+            st.success("✅ Gemini API Key បានផ្ទុកស្រាប់")
         else:
             gemini_api_key_input = st.text_input("Google Gemini API Key", type="password")
             if gemini_api_key_input:
                 genai.configure(api_key=gemini_api_key_input)
     else:
         if OPENAI_API_KEY:
-            st.success("✅ OpenAI API Key បានផ្ទុកស្រាប់ពី System Secrets")
+            st.success("✅ OpenAI API Key បានផ្ទុកស្រាប់")
             openai.api_key = OPENAI_API_KEY
         else:
             openai_api_key_input = st.text_input("OpenAI API Key", type="password")
             if openai_api_key_input:
                 openai.api_key = openai_api_key_input
 
-with st.sidebar.expander("📊 Google Sheets Configuration", expanded=False):
-    gsheet_json = st.text_area("Service Account JSON Key (Paste JSON text here)")
-    gsheet_url = st.text_input("Spreadsheet URL / ID")
-
 with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
     fb_page_id = st.text_input("Facebook Page ID")
-    fb_access_token = st.text_input("Facebook Access Token / API", type="password")
+    fb_access_token = st.text_input("Facebook Access Token", type="password")
 
 with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
     tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
@@ -340,35 +366,26 @@ with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
 with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
     yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-with st.sidebar.expander("🔔 Telegram Notification Settings", expanded=False):
-    tg_token = st.text_input("Telegram Bot Token", type="password")
-    tg_chat_id = st.text_input("Telegram Chat ID")
-
-with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
-    schedule_freq = st.selectbox("Schedule Frequency", ["Manual", "Every 1 hour", "Every 6 hours", "Daily"], label_visibility="collapsed")
-    st.caption("មុខងារ Auto Scheduler កំពុងដំណើរការក្នុងប្រព័ន្ធផ្ទៃខាងក្រោយ។")
-
 st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស់", expanded=False):
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 3.0 Pro (Direct Auth & Google Sheets Backup)  
-    * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
+    * **ជំនាន់ (Version):** 3.5 Pro (Custom HTML/CSS UI & Direct Auth)  
     """)
 
-# --- MAIN INTERFACE (FIXED STICKY HEADER) ---
+# --- MAIN STICKY HEADER ---
 st.markdown("""
     <div class="sticky-header">
-        <h1 style="margin:0; font-size: 26px; font-weight: 700; color: #1e293b;">🚀 UNME AI Social Media</h1>
-        <p style="margin:2px 0 0 0; color: #64748b; font-size: 14px;">ប្រព័ន្ធគ្រប់គ្រង ស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនវីដេអូ ឬរូបភាពទៅកាន់ Facebook, TikTok និង YouTube (by Hab Rithy)</p>
+        <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #1e293b;">🚀 UNME AI Social Media</h1>
+        <p style="margin:2px 0 0 0; color: #64748b; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube (by Hab Rithy)</p>
     </div>
 """, unsafe_allow_html=True)
 
-# --- REORDERED TABS ---
+# --- MODERN TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
+    "🚀 ផ្ទាំងគ្រប់គ្រងการផុស (Dashboard)", 
     "📈 Analytics Dashboard",
     "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
     "💬 Support Chat & AI Assistant"
@@ -376,7 +393,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 
 # --- TAB 1: MAIN DASHBOARD ---
 with tab1:
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
     st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
     post_type = st.radio(
         "តើអ្នកចង់ផុសមាតិកាប្រភេទណា?", 
@@ -384,45 +401,44 @@ with tab1:
         horizontal=True
     )
 
-    enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
+    enable_watermark = st.checkbox("✨ បើកដំណើរการដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
     watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
-
     media_file_path = None
 
     if post_type == "🎥 Video / Reels":
-        uploaded_file = st.file_uploader("ជ្រើសរើសឯកសារវីដេអូផ្ទាល់ (.mp4, .mov, .avi)", type=["mp4", "mov", "avi"])
+        uploaded_file = st.file_uploader("ជ្រើសរើសឯកសារវីដេអូ (.mp4, .mov, .avi)", type=["mp4", "mov", "avi"])
         if uploaded_file is not None:
             raw_path = os.path.join(".", "raw_" + uploaded_file.name)
             with open(raw_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             
             if enable_watermark:
-                st.info("កំពុងច្នៃប្រឌិត និងដាក់ Watermark លើវីដេអូ...")
+                st.info("កំពុងដាក់ Watermark លើវីដេអូ...")
                 media_file_path = os.path.join(".", "wm_" + uploaded_file.name)
                 process_video_watermark(raw_path, media_file_path, watermark_text)
-                st.success(f"បានដាក់ Watermark លើវីដេអូជោគជ័យ៖ {uploaded_file.name}")
+                st.success(f"ដាក់ Watermark លើវីដេអូជោគជ័យ៖ {uploaded_file.name}")
             else:
                 media_file_path = raw_path
                 st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
     else:
-        uploaded_image = st.file_uploader("ជ្រើសរើសរូបភាពសម្រាប់ផុស (.jpg, .jpeg, .png)", type=["jpg", "jpeg", "png"])
+        uploaded_image = st.file_uploader("ជ្រើសរើសរូបភាព (.jpg, .jpeg, .png)", type=["jpg", "jpeg", "png"])
         if uploaded_image is not None:
             raw_path = os.path.join(".", "raw_" + uploaded_image.name)
             with open(raw_path, "wb") as f:
                 f.write(uploaded_image.getbuffer())
                 
             if enable_watermark:
-                st.info("កំពុងច្នៃប្រឌិត និងដាក់ Watermark លើរូបភាព...")
+                st.info("កំពុងដាក់ Watermark លើរូបភាព...")
                 media_file_path = os.path.join(".", "wm_" + uploaded_image.name)
                 process_image_watermark(raw_path, media_file_path, watermark_text)
-                st.success(f"បានដាក់ Watermark លើរូបភាពជោគជ័យ៖ {uploaded_image.name}")
+                st.success(f"ដាក់ Watermark លើរូបភាពជោគជ័យ៖ {uploaded_image.name}")
             else:
                 media_file_path = raw_path
                 st.success(f"បានផ្ទុកឡើងរូបភាព៖ {uploaded_image.name}")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.subheader(f"🤖 ការកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
+    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    st.subheader(f"🤖 ການកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
     caption_prompt = st.text_area(
         "សរសេរពាក្យបញ្ជា ឬស្ទីលដែលចង់បានឱ្យ AI បង្កើត៖",
         placeholder="ឧទាហរណ៍៖ សរសេរ Caption ជាភាសាខ្មែរឱ្យទាក់ទាញបែបកំប្លែង ព្រមទាំង Hashtags ល្បីៗ..."
@@ -436,12 +452,12 @@ with tab1:
                     model = genai.GenerativeModel('gemini-1.5-flash')
                     response = model.generate_content(f"Write a social media caption and hashtags based on this prompt: {caption_prompt}")
                     generated_caption = response.text
-                    st.success("AI (Gemini) បានបង្កើត Caption រួចរាល់!")
+                    st.success("AI បានបង្កើត Caption រួចរាល់!")
                     st.write(generated_caption)
                 except Exception as e:
-                    st.error(f"មានកំហុសក្នុងការតភ្ជាប់ Gemini AI៖ {e}")
+                    st.error(f"មានកំហុស៖ {e}")
             else:
-                st.warning("មិនមាន GEMINI_API_KEY នៅក្នុងប្រព័ន្ធទេ។ សូមពិនិត្យមើលឯកសារ .env ។")
+                st.warning("សូមកំណត់ GEMINI_API_KEY ជាមុនសិន។")
         else:
             if OPENAI_API_KEY:
                 try:
@@ -451,18 +467,18 @@ with tab1:
                         messages=[{"role": "user", "content": f"Write a social media caption and hashtags based on this prompt: {caption_prompt}"}]
                     )
                     generated_caption = response.choices[0].message.content
-                    st.success("AI (ChatGPT) បានបង្កើត Caption រួចរាល់!")
+                    st.success("AI បានបង្កើត Caption រួចរាល់!")
                     st.write(generated_caption)
                 except Exception as e:
-                    st.error(f"មានកំហុសក្នុងការតភ្ជាប់ OpenAI API៖ {e}")
+                    st.error(f"មានកំហុស៖ {e}")
             else:
-                st.warning("មិនមាន OPENAI_API_KEY នៅក្នុងប្រព័ន្ធទេ។")
+                st.warning("សូមកំណត់ OPENAI_API_KEY ជាមុនសិន។")
 
     final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.subheader("🎬 ជ្រើសរើសវេទិកាសម្រាប់ការបញ្ជូន (Multi-Platform Selection)")
+    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    st.subheader("🎬 ជ្រើសរើសវេទិកាសម្រាប់ការបញ្ជូន")
     col_a, col_b, col_c = st.columns(3)
     with col_a:
         pub_fb = st.checkbox("📘 Facebook", value=True)
@@ -479,14 +495,11 @@ with tab1:
             results = []
             
             if pub_fb:
-                res_fb = upload_to_facebook(media_file_path, final_caption, post_type=post_type)
-                results.append(res_fb)
+                results.append(upload_to_facebook(media_file_path, final_caption, post_type=post_type))
             if pub_tiktok:
-                res_tk = upload_to_tiktok(media_file_path, final_caption)
-                results.append(res_tk)
+                results.append(upload_to_tiktok(media_file_path, final_caption))
             if pub_yt:
-                res_yt = upload_to_youtube(media_file_path, "AI Generated Content", final_caption)
-                results.append(res_yt)
+                results.append(upload_to_youtube(media_file_path, "AI Content", final_caption))
                 
             st.success("ការបញ្ជូនបានបញ្ចប់!")
             st.json(results)
@@ -501,45 +514,26 @@ with tab1:
                 "time": timestamp
             }
             
-            # Local JSON Backup
             try:
+                history_data = []
                 if os.path.exists("history.json"):
                     with open("history.json", "r", encoding="utf-8") as f:
                         history_data = json.load(f)
-                else:
-                    history_data = []
-                    
                 history_data.append(history_entry)
                 with open("history.json", "w", encoding="utf-8") as f:
                     json.dump(history_data, f, ensure_ascii=False, indent=4)
-                st.info("✅ បានរក្សាទុកប្រវត្តិក្នុង Local history.json រួចរាល់។")
+                st.success("✅ បានរក្សាទុកប្រវត្តិការងារដោយជោគជ័យ!")
             except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងការរក្សាទុក Local history.json៖ {e}")
-                
-            # Google Sheets Persistent Data Backup
-            if gsheet_json and gsheet_url:
-                try:
-                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                    creds_dict = json.loads(gsheet_json)
-                    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-                    client = gspread.authorize(creds)
-                    
-                    sheet = client.open_by_url(gsheet_url).sheet1
-                    sheet.append_row([f"{current_user['name']} ({current_user['email']})", post_type, media_file_path, final_caption, str(results), timestamp])
-                    
-                    st.success("✅ បានបម្រុងទុក និងកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
-                except Exception as e:
-                    st.error(f"មានបញ្ហាក្នុងការកត់ត្រាចូល Google Sheets៖ {e}")
+                st.error(f"មានបញ្ហាក្នុងការរក្សាទុកប្រវត្តិ៖ {e}")
         else:
             st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 2: ANALYTICS DASHBOARD ---
 with tab2:
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
     st.subheader("📊 Analytics & Performance Dashboard")
-    st.markdown("ផ្ទាំងបង្ហាញស្ថិតិ និងការវិភាគទូទៅនៃការបញ្ជូនមាតិកាទៅកាន់ Social Media Platforms។")
-
+    
     if os.path.exists("history.json"):
         try:
             with open("history.json", "r", encoding="utf-8") as f:
@@ -551,82 +545,52 @@ with tab2:
             yt_count = sum(1 for item in hist_data if any("YouTube" in str(r)) for r in item.get("results", []))
 
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("📌 ការផុសសរុប (Total Posts)", total_posts)
-            m2.metric("📘 Facebook Posts", fb_count)
-            m3.metric("🎵 TikTok Posts", tiktok_count)
-            m4.metric("📺 YouTube Posts", yt_count)
+            m1.metric("📌 ការផុសសរុប", total_posts)
+            m2.metric("📘 Facebook", fb_count)
+            m3.metric("🎵 TikTok", tiktok_count)
+            m4.metric("📺 YouTube", yt_count)
 
             st.markdown("---")
-            st.subheader("📈 ប្រវត្តិនៃការប្រើប្រាស់តាមវេទិកា")
-            
             if total_posts > 0:
-                st.bar_chart({
-                    "Facebook": fb_count,
-                    "TikTok": tiktok_count,
-                    "YouTube": yt_count
-                })
+                st.bar_chart({"Facebook": fb_count, "TikTok": tiktok_count, "YouTube": yt_count})
             else:
-                st.info("មិនទាន់មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់បង្ហាញជាក្រាហ្វិក (Chart) ទេ។")
-
+                st.info("មិនទាន់មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់បង្ហាញក្រាហ្វិកទេ។")
         except Exception as e:
-            st.error(f"មានបញ្ហាក្នុងការអានទិន្នន័យសម្រាប់ Analytics៖ {e}")
+            st.error(f"មានបញ្ហា៖ {e}")
     else:
-        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារ (history.json) នៅឡើយទេ។ សូមធ្វើការ Upload មាតិកាសិន។")
-
+        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារនៅឡើយទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 3: VIEW HISTORY ---
 with tab3:
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
     st.subheader("📊 ពិនិត្យប្រវត្តិการងារ (View History)")
 
-    if st.button("🔄 ផ្ទុកទិន្នន័យប្រវត្តិការងារឡើងវិញ"):
+    if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
         st.rerun()
 
-    if storage_mode == "Local history.json":
-        if os.path.exists("history.json"):
-            try:
-                with open("history.json", "r", encoding="utf-8") as f:
-                    history_data = json.load(f)
-                if history_data:
-                    st.dataframe(history_data, use_container_width=True)
-                else:
-                    st.info("មិនទាន់មានប្រវត្តិការងារក្នុង Local history.json នៅឡើយទេ។")
-            except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងការអានឯកសារ history.json៖ {e}")
-        else:
-            st.info("មិនទាន់មានឯកសារ history.json ទេ។")
-
-    elif storage_mode == "Google Sheets":
-        if gsheet_json and gsheet_url:
-            try:
-                scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                creds_dict = json.loads(gsheet_json)
-                creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-                client = gspread.authorize(creds)
-                
-                sheet = client.open_by_url(gsheet_url).sheet1
-                records = sheet.get_all_records()
-                
-                if records:
-                    st.dataframe(records, use_container_width=True)
-                else:
-                    st.info("Google Sheet របស់អ្នកនៅទទេ។")
-            except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងการទាញយកទិន្នន័យពី Google Sheets៖ {e}")
-        else:
-            st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
+    if os.path.exists("history.json"):
+        try:
+            with open("history.json", "r", encoding="utf-8") as f:
+                history_data = json.load(f)
+            if history_data:
+                st.dataframe(history_data, use_container_width=True)
+            else:
+                st.info("ប្រវត្តិការងារទទេ។")
+        except Exception as e:
+            st.error(f"មានបញ្ហា៖ {e}")
+    else:
+        st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
 with tab4:
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support Chat & AI Assistant)")
-    st.markdown("សួរសំណួរ ឬពិភាក្សាជាមួយ AI Support អំពីបញ្ហាបច្ចេកទេស ការប្រើប្រាស់ API ឬគន្លឹះផ្សេងៗក្នុងប្រព័ន្ធ **UNME AI Social Media**។")
+    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support AI Assistant)")
 
     if "support_messages" not in st.session_state:
         st.session_state["support_messages"] = [
-            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant របស់ UNME (by Hab Rithy)។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
+            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant (by Hab Rithy)។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
         ]
 
     for msg in st.session_state["support_messages"]:
@@ -643,14 +607,13 @@ with tab4:
                 try:
                     if GEMINI_API_KEY:
                         model = genai.GenerativeModel('gemini-1.5-flash')
-                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media built by Hab Rithy'. Answer the user's question professionally: {user_query}")
+                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media built by Hab Rithy'. Answer professionally: {user_query}")
                         bot_reply = chat_response.text
                     else:
-                        bot_reply = "សូមកំណត់ GEMINI_API_KEY ក្នុង .env ជាមុនសិន ដើម្បីឱ្យ Support AI អាចដំណើរការឆ្លើយតបបាន។"
+                        bot_reply = "សូមកំណត់ GEMINI_API_KEY ជាមុនសិន។"
                     
                     st.markdown(bot_reply)
                     st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
                 except Exception as e:
-                    err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
-                    st.error(err_msg)
+                    st.error(f"មានបញ្ហា៖ {e}")
     st.markdown('</div>', unsafe_allow_html=True)
