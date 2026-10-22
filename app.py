@@ -142,8 +142,12 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- SEPARATE INTO TABS (ផ្ទាំងដាច់ដោយឡែកពីគ្នា) ---
-tab1, tab2 = st.tabs(["🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", "📊 ពិនិត្យប្រវត្តិការងារ (View History)"])
+# --- SEPARATE INTO TABS (ផ្ទាំងដាច់ដោយឡែកពីគ្នា រួមទាំង Support Chat) ---
+tab1, tab2, tab3 = st.tabs([
+    "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
+    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
+    "💬 Support Chat & AI Assistant"
+])
 
 with tab1:
     # 1. Post Type & Media Input Section
@@ -275,7 +279,7 @@ with tab1:
             st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
 
 with tab2:
-    # --- VIEW HISTORY TABLE SECTION (SEPARATE TAB) ---
+    # --- VIEW HISTORY TABLE SECTION ---
     st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យប្រវត្តិការងារឡើងវិញ"):
@@ -314,3 +318,42 @@ with tab2:
                 st.error(f"មានបញ្ហាក្នុងការទាញយកទិន្នន័យពី Google Sheets៖ {e}")
         else:
             st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
+
+with tab3:
+    # --- SUPPORT CHAT & AI ASSISTANT TAB ---
+    st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support Chat & AI Assistant)")
+    st.markdown("សួរសំណួរ ឬពិភាក្សាជាមួយ AI Support អំពីបញ្ហាបច្ចេកទេស ការប្រើប្រាស់ API ឬគន្លឹះផ្សេងៗក្នុងប្រព័ន្ធ **UNME AI Social Media**។")
+
+    if "support_messages" not in st.session_state:
+        st.session_state["support_messages"] = [
+            {"role": "assistant", "content": "សួស្ដី! ខ្ញុំជា Support AI Assistant របស់ UNME ។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
+        ]
+
+    # បង្ហាញប្រវត្តិសារជជែក
+    for msg in st.session_state["support_messages"]:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    # ប្រអប់វាយអត្ថបទសម្រាប់សួរសំណួរ Support
+    if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីនេះ..."):
+        st.session_state["support_messages"].append({"role": "user", "content": user_query})
+        with st.chat_message("user"):
+            st.markdown(user_query)
+
+        # ឆ្លើយតបដោយប្រើ AI Assistant (Gemini)
+        with st.chat_message("assistant"):
+            with st.spinner("កំពុងពិចារណា..."):
+                try:
+                    if 'gemini_api_key' in locals() and gemini_api_key:
+                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media built by Hab Rithy'. Answer the user's question professionally: {user_query}")
+                        bot_reply = chat_response.text
+                    else:
+                        bot_reply = "សូមបញ្ចូល Google Gemini API Key នៅផ្នែក Sidebar ខាងឆ្វេងជាមុនសិន ដើម្បីឱ្យ Support AI អាចដំណើរការឆ្លើយតបបាន។"
+                    
+                    st.markdown(bot_reply)
+                    st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
+                except Exception as e:
+                    err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
+                    st.error(err_msg)
+                    st.session_state["support_messages"].append({"role": "assistant", "content": err_msg})
