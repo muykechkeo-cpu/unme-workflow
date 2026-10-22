@@ -390,7 +390,7 @@ with st.sidebar.expander("📁 គ្រប់គ្រងទិន្នន័�
         if sheet_id_input:
             st.success("✅ បានតភ្ជាប់ Google Sheet ID រួចរាល់")
     elif storage_type == "SQLite Database (unme_social.db)":
-        st.success("✅ កំពុងប្រើប្រាស់ SQLite Database ក្នុងเครื่อง (Local DB)")
+        st.success("✅ កំពុងប្រើប្រាស់ SQLite Database ក្នុង Local DB")
     else:
         st.caption("ប្រព័ន្ធរក្សាទុកទិន្នន័យក្នុង Local File (history.json)")
         if os.path.exists("history.json"):
@@ -416,7 +416,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 5.6 Soft UI Pro  
+    * **ជំនាន់ (Version):** 5.7 Soft UI Pro  
     """)
 
 # --- TOP HEADER ---
@@ -701,7 +701,7 @@ with tab3:
             if rows:
                 st.table(rows)
             else:
-                st.info("ប្រវត្តិការងារក្នុង SQLite Database គឺទទេ។")
+                st.info("ប្រវត្តិการងារក្នុង SQLite Database គឺទទេ។")
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
@@ -716,7 +716,7 @@ with tab3:
             except Exception as e:
                 st.error(f"មានបញ្ហា៖ {e}")
         else:
-            st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
+            st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
