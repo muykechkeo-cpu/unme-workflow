@@ -31,7 +31,7 @@ st.set_page_config(
 # --- DARK NEON CUSTOM CSS & HTML STYLING ---
 st.markdown("""
     <style>
-        /* Global Reset & Dark Theme Background for Main App */
+        /* Global Reset & Dark Theme Background */
         .stApp {
             background-color: #0b0f19;
             color: #ffffff !important;
@@ -68,9 +68,17 @@ st.markdown("""
             color: #000000 !important;
         }
 
-        /* Force Login Box Text to BLACK */
+        /* Force Login Box and text inside it to WHITE / Dark Neon */
+        .auth-box {
+            background: #111827 !important;
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid #1f2937;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            color: #ffffff !important;
+        }
         .auth-box p, .auth-box span, .auth-box label, .auth-box div, .auth-box .stRadio label {
-            color: #000000 !important;
+            color: #ffffff !important;
         }
 
         /* Force Input Text Boxes to have Black Text */
@@ -157,15 +165,6 @@ st.markdown("""
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
             transform: translateY(-2px);
         }
-
-        /* Auth Container Styling */
-        .auth-box {
-            background: #ffffff;
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid #cbd5e1;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -221,8 +220,8 @@ if not st.session_state["logged_in"]:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown('<div class="auth-box">', unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center; color: #2563eb; margin-bottom: 10px;'>🚀 UNME AI Social Media</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #000000; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #60a5fa; margin-bottom: 10px;'>🚀 UNME AI Social Media</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #ffffff; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប</p>", unsafe_allow_html=True)
         
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["🔑 ចូលប្រព័ន្ធ (Sign In)", "📝 ចុះឈ្មោះ (Sign Up)"], horizontal=True)
         st.markdown("<br>", unsafe_allow_html=True)
@@ -391,7 +390,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 4.6 Dark Neon Pro  
+    * **ជំនាន់ (Version):** 4.7 Dark Neon Pro  
     """)
 
 # --- TOP HEADER ---
@@ -444,7 +443,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -659,7 +658,7 @@ with tab3:
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
-        st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
+        st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
