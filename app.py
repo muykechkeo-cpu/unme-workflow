@@ -23,18 +23,18 @@ if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 st.set_page_config(
-    page_title="UNME AI Social Media - Dark Neon Pro",
+    page_title="UNME AI Social Media - Light Pro UI",
     page_icon="🚀",
     layout="wide"
 )
 
-# --- DARK NEON CUSTOM CSS & HTML STYLING ---
+# --- LIGHT CLEAN PRO CUSTOM CSS & HTML STYLING ---
 st.markdown("""
     <style>
-        /* Global Reset & Dark Theme Background */
+        /* Global Light Clean Theme Background */
         .stApp {
-            background-color: #0b0f19;
-            color: #ffffff !important;
+            background-color: #f8fafc;
+            color: #1e293b;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         .block-container {
@@ -43,17 +43,17 @@ st.markdown("""
             max-width: 98% !important;
         }
         
-        /* Force Main Area Text, Labels, Radio, Checkboxes, and Descriptions to WHITE */
+        /* Force Main Area Text to Dark Slate */
         .main p, .main span, .main label, .main div, .main .stMarkdown, 
         .main .stRadio label, .main .stCheckbox label, .main .stCaption, 
         .main [data-baseweb="radio"] div, .main [data-baseweb="checkbox"] div,
         .main small, .main .stWidgetLabel {
-            color: #ffffff !important;
+            color: #1e293b !important;
         }
         
-        /* Force Main Area Titles to NEON BLUE */
+        /* Force Main Area Titles to Clean Blue */
         .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, .main .stSubheader {
-            color: #60a5fa !important;
+            color: #2563eb !important;
         }
         
         /* Force Sidebar Text to BLACK */
@@ -71,70 +71,38 @@ st.markdown("""
             color: #000000 !important;
         }
 
-        /* Force Login Box and text inside it to WHITE */
-        .auth-box {
-            background: #111827 !important;
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid #1f2937;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            color: #ffffff !important;
-        }
-        .auth-box p, .auth-box span, .auth-box label, .auth-box div, .auth-box .stRadio label {
-            color: #ffffff !important;
-        }
-
-        /* Force Input Text Boxes to have Black Text */
-        input, textarea, select {
-            color: #000000 !important;
-        }
-        
-        /* Force Metric Text Color to White */
-        [data-testid="stMetricValue"], [data-testid="stMetricLabel"], [data-testid="stMetricDelta"] {
-            color: #ffffff !important;
-        }
-        
-        /* Dark Neon Cards */
-        .neon-card {
-            background: #111827;
-            border: 1px solid #1f2937;
+        /* Clean White Cards */
+        .clean-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             padding: 24px;
             border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
             margin-bottom: 20px;
-            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .clean-card:hover {
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.08);
+            border-color: #cbd5e1;
         }
 
-        /* Gradient Stat Cards */
+        /* Stat Cards */
         .stat-card-1 {
-            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
             padding: 20px;
             border-radius: 16px;
-            color: white;
-            box-shadow: 0 10px 20px rgba(236, 72, 153, 0.2);
-        }
-        .stat-card-2 {
-            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-            padding: 20px;
-            border-radius: 16px;
-            color: white;
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
-        }
-        .stat-card-3 {
-            background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
-            padding: 20px;
-            border-radius: 16px;
-            color: white;
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            color: #1e293b;
         }
 
-        /* Tabs Styling for Dark Neon */
+        /* Tabs Styling */
         .stTabs [data-baseweb="tab-list"] {
             gap: 12px;
-            background-color: #111827;
+            background-color: #f1f5f9;
             padding: 8px;
             border-radius: 14px;
-            border: 1px solid #1f2937;
+            border: 1px solid #e2e8f0;
         }
         .stTabs [data-baseweb="tab"] {
             height: 48px;
@@ -142,13 +110,13 @@ st.markdown("""
             background-color: transparent;
             border-radius: 10px;
             font-weight: 600;
-            color: #9ca3af;
+            color: #64748b;
             border: none;
         }
         .stTabs [aria-selected="true"] {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+            background: #2563eb !important;
             color: #ffffff !important;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
         }
 
         /* Buttons Styling */
@@ -157,16 +125,25 @@ st.markdown("""
             border-radius: 10px;
             font-weight: 600;
             padding: 10px 24px;
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             color: white;
             border: none;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
             transition: all 0.3s ease;
         }
         div.stButton > button:hover {
-            background: linear-gradient(135deg, #1d4ed8 100%, #1e40af 100%);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
-            transform: translateY(-2px);
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+            transform: translateY(-1px);
+        }
+
+        /* Auth Container Styling */
+        .auth-box {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -223,8 +200,8 @@ if not st.session_state["logged_in"]:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown('<div class="auth-box">', unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center; color: #60a5fa; margin-bottom: 10px;'>🚀 UNME AI Social Media</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #ffffff; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #2563eb; margin-bottom: 10px;'>🚀 WPOS AI Social Media</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748b; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប</p>", unsafe_allow_html=True)
         
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["🔑 ចូលប្រព័ន្ធ (Sign In)", "📝 ចុះឈ្មោះ (Sign Up)"], horizontal=True)
         st.markdown("<br>", unsafe_allow_html=True)
@@ -392,15 +369,15 @@ st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស់", expanded=False):
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
-    **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 4.9 Dark Neon Pro  
+    **WPOS Social Media**  
+    * **ជំនាន់ (Version):** 5.0 Clean Light Pro  
     """)
 
 # --- TOP HEADER ---
 st.markdown("""
-    <div style="background: #111827; padding: 20px 24px; border-radius: 16px; border: 1px solid #1f2937; margin-bottom: 24px;">
-        <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #60a5fa;">🚀 UNME AI Social Media Dashboard</h1>
-        <p style="margin:4px 0 0 0; color: #ffffff; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube</p>
+    <div style="background: #ffffff; padding: 20px 24px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+        <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #2563eb;">WPOS Dashboard</h1>
+        <p style="margin:4px 0 0 0; color: #64748b; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -421,22 +398,22 @@ col_m1, col_m2, col_m3 = st.columns(3)
 with col_m1:
     st.markdown(f"""
         <div class="stat-card-1">
-            <div style="font-size: 14px; font-weight: 600; opacity: 0.9; color: #ffffff;">📌 Total Posts / Videos</div>
-            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #ffffff;">{total_posts}</div>
+            <div style="font-size: 14px; font-weight: 600; color: #64748b;">📌 Total Posts / Videos</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #1e293b;">{total_posts}</div>
         </div>
     """, unsafe_allow_html=True)
 with col_m2:
     st.markdown(f"""
-        <div class="stat-card-2">
-            <div style="font-size: 14px; font-weight: 600; opacity: 0.9; color: #ffffff;">📘 Facebook Published</div>
-            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #ffffff;">{fb_c}</div>
+        <div class="stat-card-1">
+            <div style="font-size: 14px; font-weight: 600; color: #64748b;">📘 Facebook Published</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #1e293b;">{fb_c}</div>
         </div>
     """, unsafe_allow_html=True)
 with col_m3:
     st.markdown(f"""
-        <div class="stat-card-3">
-            <div style="font-size: 14px; font-weight: 600; opacity: 0.9; color: #ffffff;">🎵 TikTok Published</div>
-            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #ffffff;">{tk_c}</div>
+        <div class="stat-card-1">
+            <div style="font-size: 14px; font-weight: 600; color: #64748b;">🎵 TikTok Published</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #1e293b;">{tk_c}</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -446,13 +423,13 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
 # --- TAB 1: MAIN DASHBOARD ---
 with tab1:
-    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
     st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
     post_type = st.radio(
         "តើអ្នកចង់ផុសមាតិកាប្រភេទណា?", 
@@ -461,7 +438,7 @@ with tab1:
     )
 
     enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
-    watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
+    watermark_text = st.text_input("អត្ថបទ Watermark", value="WPOS AI")
     media_file_path = None
 
     if post_type == "🎥 Video / Reels":
@@ -496,7 +473,7 @@ with tab1:
                 st.success(f"បានផ្ទុកឡើងរូបភាព៖ {uploaded_image.name}")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
     st.subheader(f"🤖 ការកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
     caption_prompt = st.text_area(
         "សរសេរពាក្យបញ្ជា ឬស្ទីលដែលចង់បានឱ្យ AI បង្កើត៖",
@@ -537,7 +514,7 @@ with tab1:
     st.markdown('</div>', unsafe_allow_html=True)
 
     # --- POST SCHEDULING SELECTION ---
-    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
     st.subheader("📅 ការកំណត់កាលវិភាគនៃការផុស (Post Scheduling Settings)")
     
     post_mode = st.radio("ជ្រើសរើសរបៀបផុស៖", ["🚀 ផុសភ្លាមៗ (Publish Immediately)", "⏰ កំណត់កាលវិភាគ (Schedule Post)"], horizontal=True)
@@ -612,7 +589,7 @@ with tab1:
 
 # --- TAB 2: ANALYTICS DASHBOARD ---
 with tab2:
-    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
     st.subheader("📊 Analytics & Performance Dashboard")
     
     if os.path.exists("history.json"):
@@ -644,8 +621,8 @@ with tab2:
 
 # --- TAB 3: VIEW HISTORY ---
 with tab3:
-    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
-    st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
+    st.subheader("📊 ពិនិត្យប្រវត្តិการងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
         st.rerun()
@@ -661,12 +638,12 @@ with tab3:
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
-        st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
+        st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
 with tab4:
-    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
     st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support AI Assistant)")
 
     if "support_messages" not in st.session_state:
@@ -688,7 +665,7 @@ with tab4:
                 try:
                     if GEMINI_API_KEY:
                         model = genai.GenerativeModel('gemini-1.5-flash')
-                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media'. Answer professionally: {user_query}")
+                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'WPOS Social Media'. Answer professionally: {user_query}")
                         bot_reply = chat_response.text
                     else:
                         bot_reply = "សូមកំណត់ GEMINI_API_KEY ជាមុនសិន។"
