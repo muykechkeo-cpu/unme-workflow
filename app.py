@@ -156,7 +156,7 @@ def load_users():
     default_users = {
         "admin@unme.com": {
             "password": "adminpassword",
-            "name": "Hab Rithy (Admin)",
+            "name": "Administrator",
             "role": "admin"
         }
     }
@@ -197,7 +197,7 @@ if not st.session_state["logged_in"]:
     with col2:
         st.markdown('<div class="auth-box">', unsafe_allow_html=True)
         st.markdown("<h2 style='text-align: center; color: #60a5fa; margin-bottom: 10px;'>🚀 UNME AI Social Media</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #ffffff; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប (by Hab Rithy)</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #ffffff; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប</p>", unsafe_allow_html=True)
         
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["🔑 ចូលប្រព័ន្ធ (Sign In)", "📝 ចុះឈ្មោះ (Sign Up)"], horizontal=True)
         st.markdown("<br>", unsafe_allow_html=True)
@@ -366,15 +366,14 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 4.2 Dark Neon Pro  
+    * **ជំនាន់ (Version):** 4.3 Dark Neon Pro  
     """)
 
 # --- TOP HEADER ---
 st.markdown("""
     <div style="background: #111827; padding: 20px 24px; border-radius: 16px; border: 1px solid #1f2937; margin-bottom: 24px;">
         <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #60a5fa;">🚀 UNME AI Social Media Dashboard</h1>
-        <p style="margin:4px 0 0 0; color: #ffffff; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube (by Hab Rithy)</p>
+        <p style="margin:4px 0 0 0; color: #ffffff; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -645,7 +644,7 @@ with tab4:
 
     if "support_messages" not in st.session_state:
         st.session_state["support_messages"] = [
-            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant (by Hab Rithy)។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
+            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
         ]
 
     for msg in st.session_state["support_messages"]:
@@ -662,7 +661,7 @@ with tab4:
                 try:
                     if GEMINI_API_KEY:
                         model = genai.GenerativeModel('gemini-1.5-flash')
-                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media built by Hab Rithy'. Answer professionally: {user_query}")
+                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media'. Answer professionally: {user_query}")
                         bot_reply = chat_response.text
                     else:
                         bot_reply = "សូមកំណត់ GEMINI_API_KEY ជាមុនសិន។"
