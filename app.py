@@ -28,10 +28,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- DARK NEON CUSTOM CSS & HTML STYLING (WHITE TEXT & NEON BLUE TITLES) ---
+# --- DARK NEON CUSTOM CSS & HTML STYLING ---
 st.markdown("""
     <style>
-        /* Global Reset & Dark Theme Background */
+        /* Global Reset & Dark Theme Background for Main Area */
         .stApp {
             background-color: #0b0f19;
             color: #ffffff !important;
@@ -43,14 +43,29 @@ st.markdown("""
             max-width: 98% !important;
         }
         
-        /* Force All Text and Labels to White */
-        p, span, label, div, .stMarkdown, .stRadio label, .stCheckbox label, .stCaption {
+        /* Force Main Area Text and Labels to White */
+        .main p, .main span, .main label, .main div, .main .stMarkdown, .main .stRadio label, .main .stCheckbox label, .main .stCaption {
             color: #ffffff !important;
         }
         
-        /* Force Titles and Subheaders to Neon Blue */
-        h1, h2, h3, h4, h5, h6, .stSubheader {
+        /* Force Main Area Titles and Subheaders to Neon Blue */
+        .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, .main .stSubheader {
             color: #60a5fa !important;
+        }
+        
+        /* Force Sidebar Text to BLACK as requested */
+        [data-testid="stSidebar"] p, 
+        [data-testid="stSidebar"] span, 
+        [data-testid="stSidebar"] label, 
+        [data-testid="stSidebar"] div, 
+        [data-testid="stSidebar"] .stMarkdown, 
+        [data-testid="stSidebar"] .stRadio label, 
+        [data-testid="stSidebar"] .stCheckbox label, 
+        [data-testid="stSidebar"] .stCaption,
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3 {
+            color: #000000 !important;
         }
         
         /* Force Metric Text Color to White */
@@ -366,7 +381,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 4.3 Dark Neon Pro  
+    * **ជំនាន់ (Version):** 4.4 Dark Neon Pro  
     """)
 
 # --- TOP HEADER ---
@@ -433,7 +448,7 @@ with tab1:
         horizontal=True
     )
 
-    enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
+    enable_watermark = st.checkbox("✨ បើកដំណើរการដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
     watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
     media_file_path = None
 
@@ -634,7 +649,7 @@ with tab3:
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
-        st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
+        st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
