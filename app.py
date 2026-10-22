@@ -396,7 +396,6 @@ st.sidebar.title("⚙️ System Configuration")
 
 with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
     ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
-    # ប្រើប្រាស់ API Keys ដែលបានទាញយកមកស្វ័យប្រវត្តិពី .env / Secrets ស្រាប់
     if ai_provider == "Google Gemini":
         if GEMINI_API_KEY:
             st.success("✅ Gemini API Key បានផ្ទុកស្រាប់ពី System Secrets")
@@ -471,7 +470,7 @@ with tab1:
         horizontal=True
     )
 
-    enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
+    enable_watermark = st.checkbox("✨ បើកដំណើរการដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
     watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
 
     media_file_path = None
