@@ -20,8 +20,6 @@ load_dotenv()
 # --- SECURE CREDENTIALS LOADING ---
 GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
 OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
-SENDER_EMAIL = st.secrets.get("SENDER_EMAIL") or os.getenv("SENDER_EMAIL")
-SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD") or os.getenv("SENDER_PASSWORD")
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
@@ -202,7 +200,6 @@ if not st.session_state["logged_in"]:
                 elif signup_email in users_db:
                     st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ!")
                 else:
-                    # Save user directly without OTP verification
                     users_db[signup_email] = {
                         "password": signup_pass,
                         "name": signup_name,
@@ -357,7 +354,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.9 Pro (Direct Auth & Secure Secrets)  
+    * **ជំនាន់ (Version):** 3.0 Pro (Direct Auth & Google Sheets Backup)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
@@ -373,7 +370,7 @@ st.markdown("""
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -504,6 +501,7 @@ with tab1:
                 "time": timestamp
             }
             
+            # Local JSON Backup
             try:
                 if os.path.exists("history.json"):
                     with open("history.json", "r", encoding="utf-8") as f:
@@ -518,6 +516,7 @@ with tab1:
             except Exception as e:
                 st.error(f"មានបញ្ហាក្នុងការរក្សាទុក Local history.json៖ {e}")
                 
+            # Google Sheets Persistent Data Backup
             if gsheet_json and gsheet_url:
                 try:
                     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -528,7 +527,7 @@ with tab1:
                     sheet = client.open_by_url(gsheet_url).sheet1
                     sheet.append_row([f"{current_user['name']} ({current_user['email']})", post_type, media_file_path, final_caption, str(results), timestamp])
                     
-                    st.success("✅ បានកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
+                    st.success("✅ បានបម្រុងទុក និងកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
                 except Exception as e:
                     st.error(f"មានបញ្ហាក្នុងការកត់ត្រាចូល Google Sheets៖ {e}")
         else:
@@ -572,16 +571,16 @@ with tab2:
         except Exception as e:
             st.error(f"មានបញ្ហាក្នុងការអានទិន្នន័យសម្រាប់ Analytics៖ {e}")
     else:
-        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិการងារ (history.json) នៅឡើយទេ។ សូមធ្វើការ Upload មាតិកាសិន។")
+        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារ (history.json) នៅឡើយទេ។ សូមធ្វើការ Upload មាតិកាសិន។")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 3: VIEW HISTORY ---
 with tab3:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
+    st.subheader("📊 ពិនិត្យប្រវត្តិการងារ (View History)")
 
-    if st.button("🔄 ផ្ទុកទិន្នន័យប្រវត្តិการងារឡើងវិញ"):
+    if st.button("🔄 ផ្ទុកទិន្នន័យប្រវត្តិការងារឡើងវិញ"):
         st.rerun()
 
     if storage_mode == "Local history.json":
@@ -592,7 +591,7 @@ with tab3:
                 if history_data:
                     st.dataframe(history_data, use_container_width=True)
                 else:
-                    st.info("មិនទាន់មានប្រវត្តិการងារក្នុង Local history.json នៅឡើយទេ។")
+                    st.info("មិនទាន់មានប្រវត្តិការងារក្នុង Local history.json នៅឡើយទេ។")
             except Exception as e:
                 st.error(f"មានបញ្ហាក្នុងការអានឯកសារ history.json៖ {e}")
         else:
@@ -614,9 +613,9 @@ with tab3:
                 else:
                     st.info("Google Sheet របស់អ្នកនៅទទេ។")
             except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងការទាញយកទិន្នន័យពី Google Sheets៖ {e}")
+                st.error(f"មានបញ្ហាក្នុងการទាញយកទិន្នន័យពី Google Sheets៖ {e}")
         else:
-            st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យได้ត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
+            st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
