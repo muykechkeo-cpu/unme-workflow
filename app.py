@@ -23,127 +23,112 @@ if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 st.set_page_config(
-    page_title="UNME AI Social Media",
+    page_title="UNME AI Social Media - Dark Neon Pro",
     page_icon="🚀",
     layout="wide"
 )
 
-# --- ADVANCED HTML/CSS/JS CUSTOM UI DESIGN ---
+# --- DARK NEON CUSTOM CSS & HTML STYLING ---
 st.markdown("""
     <style>
-        html, body, [class*="css"] {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        /* Global Reset & Dark Theme Background */
+        .stApp {
+            background-color: #0b0f19;
+            color: #f8fafc;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         .block-container {
             padding-top: 1rem !important;
             padding-bottom: 3rem !important;
-            max-width: 95% !important;
+            max-width: 98% !important;
         }
-        .sticky-header {
-            position: sticky;
-            top: 0px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 99999;
-            padding: 16px 24px;
-            margin-bottom: 24px;
-            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-            border-radius: 0 0 16px 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-            animation: fadeInDown 0.5s ease-out;
-        }
-        .custom-card {
-            background: #ffffff;
+        
+        /* Dark Neon Cards */
+        .neon-card {
+            background: #111827;
+            border: 1px solid #1f2937;
             padding: 24px;
             border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-bottom: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
         }
-        .custom-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.08);
-            border-color: #cbd5e1;
+        .neon-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.15);
         }
-        .auth-container {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid #cbd5e1;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
-            animation: zoomIn 0.4s ease-out;
+
+        /* Gradient Stat Cards */
+        .stat-card-1 {
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            padding: 20px;
+            border-radius: 16px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(236, 72, 153, 0.2);
         }
+        .stat-card-2 {
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            padding: 20px;
+            border-radius: 16px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+        }
+        .stat-card-3 {
+            background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            padding: 20px;
+            border-radius: 16px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Tabs Styling for Dark Neon */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 10px;
-            background-color: #f1f5f9;
-            padding: 6px;
-            border-radius: 12px;
+            gap: 12px;
+            background-color: #111827;
+            padding: 8px;
+            border-radius: 14px;
+            border: 1px solid #1f2937;
         }
         .stTabs [data-baseweb="tab"] {
-            height: 46px;
-            padding: 0px 20px;
+            height: 48px;
+            padding: 0px 24px;
             background-color: transparent;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: 600;
-            color: #64748b;
+            color: #9ca3af;
             border: none;
-            transition: all 0.2s ease;
-        }
-        .stTabs [data-baseweb="tab"]:hover {
-            color: #2563eb;
-            background-color: rgba(255, 255, 255, 0.6);
         }
         .stTabs [aria-selected="true"] {
-            background-color: #2563eb !important;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
             color: #ffffff !important;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
         }
+
+        /* Buttons Styling */
         div.stButton > button {
             width: 100%;
             border-radius: 10px;
             font-weight: 600;
             padding: 10px 24px;
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             border: none;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
             transition: all 0.3s ease;
         }
         div.stButton > button:hover {
-            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
-            transform: translateY(-1px);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
         }
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes zoomIn {
-            from { opacity: 0; transform: scale(0.97); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        @media (prefers-color-scheme: dark) {
-            .sticky-header {
-                background: rgba(15, 23, 42, 0.85);
-                border-bottom: 1px solid rgba(51, 65, 85, 0.8);
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            }
-            .custom-card {
-                background-color: #1e293b;
-                border: 1px solid #334155;
-            }
-            .auth-container {
-                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-                border: 1px solid #334155;
-            }
-            .stTabs [data-baseweb="tab-list"] {
-                background-color: #0f172a;
-            }
-            .stTabs [data-baseweb="tab"] {
-                color: #94a3b8;
-            }
+
+        /* Auth Container Styling */
+        .auth-box {
+            background: #111827;
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid #1f2937;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -160,7 +145,7 @@ def load_users():
     default_users = {
         "admin@unme.com": {
             "password": "adminpassword",
-            "name": "Starman (Admin)",
+            "name": "Hab Rithy (Admin)",
             "role": "admin"
         }
     }
@@ -199,9 +184,9 @@ if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown('<div class="auth-container">', unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center; color: #2563eb; margin-bottom: 10px;'>🚀 UNME AI Social Media</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធស្វ័យប្រវត្តិកម្មទំនើប (by Hab Rithy)</p>", unsafe_allow_html=True)
+        st.markdown('<div class="auth-box">', unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #60a5fa; margin-bottom: 10px;'>🚀 UNME AI Social Media</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #9ca3af; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប (by Hab Rithy)</p>", unsafe_allow_html=True)
         
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["🔑 ចូលប្រព័ន្ធ (Sign In)", "📝 ចុះឈ្មោះ (Sign Up)"], horizontal=True)
         st.markdown("<br>", unsafe_allow_html=True)
@@ -361,7 +346,6 @@ with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
 with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
     yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
 
-# --- ADDED BACK: SCHEDULER SETTINGS IN SIDEBAR ---
 with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
     schedule_freq = st.selectbox("Schedule Frequency", ["Manual / Scheduled", "Every 1 hour", "Every 6 hours", "Daily"])
     st.caption("ប្រព័ន្ធ Auto Scheduler នឹងរៀបចំផុសតាមម៉ោងស្វ័យប្រវត្តិ។")
@@ -372,28 +356,66 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 3.6 Pro (Scheduler & Custom UI)  
+    * **ជំនាន់ (Version):** 4.0 Dark Neon Pro  
     """)
 
-# --- MAIN STICKY HEADER ---
+# --- TOP HEADER ---
 st.markdown("""
-    <div class="sticky-header">
-        <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #1e293b;">🚀 UNME AI Social Media</h1>
-        <p style="margin:2px 0 0 0; color: #64748b; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube (by Hab Rithy)</p>
+    <div style="background: #111827; padding: 20px 24px; border-radius: 16px; border: 1px solid #1f2937; margin-bottom: 24px;">
+        <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #60a5fa;">🚀 UNME AI Social Media Dashboard</h1>
+        <p style="margin:4px 0 0 0; color: #9ca3af; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube (by Hab Rithy)</p>
     </div>
 """, unsafe_allow_html=True)
 
-# --- MAIN TABS ---
+# --- METRIC CARDS OVERVIEW (Inspired by Design) ---
+if os.path.exists("history.json"):
+    try:
+        with open("history.json", "r", encoding="utf-8") as f:
+            hist_data = json.load(f)
+        total_posts = len(hist_data)
+        fb_c = sum(1 for item in hist_data for r in item.get("results", []) if "Facebook" in str(r))
+        tk_c = sum(1 for item in hist_data for r in item.get("results", []) if "TikTok" in str(r))
+    except:
+        total_posts, fb_c, tk_c = 0, 0, 0
+else:
+    total_posts, fb_c, tk_c = 0, 0, 0
+
+col_m1, col_m2, col_m3 = st.columns(3)
+with col_m1:
+    st.markdown(f"""
+        <div class="stat-card-1">
+            <div style="font-size: 14px; font-weight: 600; opacity: 0.9;">📌 Total Posts / Videos</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px;">{total_posts}</div>
+        </div>
+    """, unsafe_allow_html=True)
+with col_m2:
+    st.markdown(f"""
+        <div class="stat-card-2">
+            <div style="font-size: 14px; font-weight: 600; opacity: 0.9;">📘 Facebook Published</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px;">{fb_c}</div>
+        </div>
+    """, unsafe_allow_html=True)
+with col_m3:
+    st.markdown(f"""
+        <div class="stat-card-3">
+            <div style="font-size: 14px; font-weight: 600; opacity: 0.9;">🎵 TikTok Published</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px;">{tk_c}</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# --- MODERN TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🚀 ផ្ទាំងគ្រប់គ្រងการផុស (Dashboard)", 
+    "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
 # --- TAB 1: MAIN DASHBOARD ---
 with tab1:
-    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
     st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
     post_type = st.radio(
         "តើអ្នកចង់ផុសមាតិកាប្រភេទណា?", 
@@ -401,7 +423,7 @@ with tab1:
         horizontal=True
     )
 
-    enable_watermark = st.checkbox("✨ បើកដំណើរการដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
+    enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
     watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
     media_file_path = None
 
@@ -437,7 +459,7 @@ with tab1:
                 st.success(f"បានផ្ទុកឡើងរូបភាព៖ {uploaded_image.name}")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
     st.subheader(f"🤖 ការកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
     caption_prompt = st.text_area(
         "សរសេរពាក្យបញ្ជា ឬស្ទីលដែលចង់បានឱ្យ AI បង្កើត៖",
@@ -478,7 +500,7 @@ with tab1:
     st.markdown('</div>', unsafe_allow_html=True)
 
     # --- POST SCHEDULING SELECTION ---
-    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
     st.subheader("📅 ការកំណត់កាលវិភាគនៃការផុស (Post Scheduling Settings)")
     
     post_mode = st.radio("ជ្រើសរើសរបៀបផុស៖", ["🚀 ផុសភ្លាមៗ (Publish Immediately)", "⏰ កំណត់កាលវិភាគ (Schedule Post)"], horizontal=True)
@@ -546,14 +568,14 @@ with tab1:
                     json.dump(history_data, f, ensure_ascii=False, indent=4)
                 st.success("✅ បានរក្សាទុកទិន្នន័យចូលក្នុងប្រវត្តិរួចរាល់!")
             except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងការរក្សាទុកប្រវត្តិ៖ {e}")
+                st.error(f"មានបញ្ហាក្នុងการរក្សាទុកប្រវត្តិ៖ {e}")
         else:
             st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 2: ANALYTICS DASHBOARD ---
 with tab2:
-    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
     st.subheader("📊 Analytics & Performance Dashboard")
     
     if os.path.exists("history.json"):
@@ -585,7 +607,7 @@ with tab2:
 
 # --- TAB 3: VIEW HISTORY ---
 with tab3:
-    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
     st.subheader("📊 ពិនិត្យប្រវត្តិการងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
@@ -607,7 +629,7 @@ with tab3:
 
 # --- TAB 4: SUPPORT CHAT ---
 with tab4:
-    st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+    st.markdown('<div class="neon-card">', unsafe_allow_html=True)
     st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support AI Assistant)")
 
     if "support_messages" not in st.session_state:
