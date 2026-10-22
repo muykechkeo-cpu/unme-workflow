@@ -43,17 +43,17 @@ st.markdown("""
             max-width: 98% !important;
         }
         
-        /* Force Main Area Text and Labels to White */
+        /* Force Main Area Text and Labels to WHITE */
         .main p, .main span, .main label, .main div, .main .stMarkdown, .main .stRadio label, .main .stCheckbox label, .main .stCaption {
             color: #ffffff !important;
         }
         
-        /* Force Main Area Titles and Subheaders to Neon Blue */
+        /* Force Main Area Titles and Subheaders to NEON BLUE */
         .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, .main .stSubheader {
             color: #60a5fa !important;
         }
         
-        /* Force Sidebar Text to BLACK as requested */
+        /* Force Sidebar Text to BLACK */
         [data-testid="stSidebar"] p, 
         [data-testid="stSidebar"] span, 
         [data-testid="stSidebar"] label, 
@@ -65,6 +65,11 @@ st.markdown("""
         [data-testid="stSidebar"] h1, 
         [data-testid="stSidebar"] h2, 
         [data-testid="stSidebar"] h3 {
+            color: #000000 !important;
+        }
+
+        /* Force Input Text Boxes to have Black Text */
+        input, textarea, select {
             color: #000000 !important;
         }
         
@@ -381,7 +386,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 4.4 Dark Neon Pro  
+    * **ជំនាន់ (Version):** 4.5 Dark Neon Pro  
     """)
 
 # --- TOP HEADER ---
@@ -434,7 +439,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -448,7 +453,7 @@ with tab1:
         horizontal=True
     )
 
-    enable_watermark = st.checkbox("✨ បើកដំណើរการដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
+    enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
     watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
     media_file_path = None
 
