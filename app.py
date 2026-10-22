@@ -1,10 +1,6 @@
 import os
 import json
 import re
-import random
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import streamlit as st
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -125,47 +121,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- EMAIL & OTP HELPERS ---
+# --- EMAIL VALIDATION HELPER ---
 def is_valid_email(email):
-    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\$"
     return re.match(pattern, email) is not None
-
-def send_verification_email(receiver_email, otp_code):
-    if not SENDER_EMAIL or not SENDER_PASSWORD:
-        print("Error: SENDER_EMAIL or SENDER_PASSWORD is not configured.")
-        return False
-        
-    message = MIMEMultipart("alternative")
-    message["Subject"] = "UNME AI - Verification Code (OTP)"
-    message["From"] = SENDER_EMAIL
-    message["To"] = receiver_email
-
-    html = f"""
-    <html>
-      <body>
-        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f8fafc; border-radius: 10px;">
-          <h2 style="color: #2563eb;">UNME AI Social Media</h2>
-          <p>សួស្តី,</p>
-          <p>លេខកូដផ្ទៀងផ្ទាត់ (OTP) របស់អ្នកសម្រាប់ចុះឈ្មោះក្នុងប្រព័ន្ធគឺ៖</p>
-          <h1 style="color: #1e293b; background: #e2e8f0; padding: 10px 20px; display: inline-block; border-radius: 5px;">{otp_code}</h1>
-          <p>សូមយកលេខកូដនេះទៅបំពេញក្នុងប្រព័ន្ធដើម្បីបន្តការចុះឈ្មោះ។</p>
-          <p>ដោយសេចក្ដីគោរព,<br><b>Hab Rithy</b></p>
-        </div>
-      </body>
-    </html>
-    """
-    message.attach(MIMEText(html, "html"))
-
-    try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())
-        server.quit()
-        return True
-    except Exception as e:
-        print(f"Error sending email: {e}")
-        return False
 
 # --- USER DATABASE MANAGEMENT (JSON FILE STORAGE) ---
 USER_DB_FILE = "users.json"
@@ -198,7 +157,7 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
-# --- EMAIL-BASED SIGN IN / SIGN UP INTERFACE (WITH OTP) ---
+# --- DIRECT SIGN IN / SIGN UP INTERFACE (NO OTP) ---
 if not st.session_state["logged_in"]:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -229,80 +188,38 @@ if not st.session_state["logged_in"]:
                 else:
                     st.error("អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ!")
         
-        else:  # Sign Up Mode with OTP Verification Steps
+        else:  # Direct Sign Up Mode (Without OTP)
             st.subheader("បង្កើតគណនីថ្មី (Sign Up)")
+            signup_name = st.text_input("ឈ្មោះពេញ / Full Name", key="su_name")
+            signup_email = st.text_input("អាសយដ្ឋានអ៊ីមែល (Email Address)", placeholder="example@gmail.com", key="su_email").strip().lower()
+            signup_pass = st.text_input("បង្កើតពាក្យសម្ងាត់ (Choose Password)", type="password", key="su_pass")
             
-            if "signup_step" not in st.session_state:
-                st.session_state["signup_step"] = 1
-
-            if st.session_state["signup_step"] == 1:
-                signup_name = st.text_input("ឈ្មោះពេញ / Full Name", key="su_name")
-                signup_email = st.text_input("អាសយដ្ឋានអ៊ីមែល (Email Address)", placeholder="example@gmail.com", key="su_email").strip().lower()
-                signup_pass = st.text_input("បង្កើតពាក្យសម្ងាត់ (Choose Password)", type="password", key="su_pass")
-                
-                if st.button("📧 ផ្ញើលេខកូដផ្ទៀងផ្ទាត់ទៅ Email", type="primary"):
-                    if not signup_name or not signup_email or not signup_pass:
-                        st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យបានត្រឹមត្រូវ។")
-                    elif not is_valid_email(signup_email):
-                        st.error("ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ!")
-                    elif signup_email in users_db:
-                        st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ!")
-                    else:
-                        otp = str(random.randint(100000, 999999))
-                        st.session_state["temp_otp"] = otp
-                        st.session_state["temp_user_data"] = {
-                            "name": signup_name,
-                            "email": signup_email,
-                            "password": signup_pass
-                        }
-                        
-                        with st.spinner("កំពុងផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់..."):
-                            success = send_verification_email(signup_email, otp)
-                            if success:
-                                st.success(f"បានផ្ញើលេខកូដទៅកាន់អ៊ីមែល {signup_email} រួចរាល់ហើយ!")
-                                st.session_state["signup_step"] = 2
-                                st.rerun()
-                            else:
-                                st.error("មានបញ្ហាក្នុងការផ្ញើអ៊ីមែល សូមពិនិត្យមើល SENDER_EMAIL និង SENDER_PASSWORD ក្នុង .env ។")
-
-            elif st.session_state["signup_step"] == 2:
-                st.info(f"សូមពិនិត្យមើលប្រអប់សារ (Inbox/Spam) របស់អ៊ីមែល៖ {st.session_state['temp_user_data']['email']}")
-                entered_otp = st.text_input("បញ្ចូលលេខកូដផ្ទៀងផ្ទាត់ ៦ខ្ទង់ (Enter OTP)", max_chars=6)
-                
-                col_btn1, col_btn2 = st.columns(2)
-                with col_btn1:
-                    if st.button("✨ ផ្ទៀងផ្ទាត់ និងចូលប្រព័ន្ធ", type="primary"):
-                        if entered_otp == st.session_state.get("temp_otp"):
-                            user_data = st.session_state["temp_user_data"]
-                            email = user_data["email"]
-                            
-                            users_db[email] = {
-                                "password": user_data["password"],
-                                "name": user_data["name"],
-                                "role": "user"
-                            }
-                            save_users(users_db)
-                            
-                            st.session_state["logged_in"] = True
-                            st.session_state["user_info"] = {
-                                "email": email,
-                                "name": user_data["name"],
-                                "role": "user"
-                            }
-                            
-                            del st.session_state["signup_step"]
-                            del st.session_state["temp_otp"]
-                            del st.session_state["temp_user_data"]
-                            
-                            st.success("ផ្ទៀងផ្ទាត់ និងចូលប្រព័ន្ធជោគជ័យ!")
-                            time.sleep(0.5)
-                            st.rerun()
-                        else:
-                            st.error("លេខកូដ OTP មិនត្រឹមត្រូវឡើយ!")
-                with col_btn2:
-                    if st.button("🔄 ចុះឈ្មោះថ្មី"):
-                        st.session_state["signup_step"] = 1
-                        st.rerun()
+            if st.button("✨ ចុះឈ្មោះ និងចូលប្រព័ន្ធភ្លាមៗ", type="primary"):
+                if not signup_name or not signup_email or not signup_pass:
+                    st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យបានត្រឹមត្រូវ។")
+                elif not is_valid_email(signup_email):
+                    st.error("ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ!")
+                elif signup_email in users_db:
+                    st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ!")
+                else:
+                    # Save user directly without OTP verification
+                    users_db[signup_email] = {
+                        "password": signup_pass,
+                        "name": signup_name,
+                        "role": "user"
+                    }
+                    save_users(users_db)
+                    
+                    st.session_state["logged_in"] = True
+                    st.session_state["user_info"] = {
+                        "email": signup_email,
+                        "name": signup_name,
+                        "role": "user"
+                    }
+                    
+                    st.success("បង្កើតគណនី និងចូលប្រព័ន្ធជោគជ័យ!")
+                    time.sleep(0.5)
+                    st.rerun()
                     
         st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
@@ -440,7 +357,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 2.9 Pro (Email OTP Verified & Secure Secrets)  
+    * **ជំនាន់ (Version):** 2.9 Pro (Direct Auth & Secure Secrets)  
     * **គោលបំណង៖** ប្រព័ន្ធស្វ័យប្រវត្តិកម្មក្នុងការបង្កើត Caption ដោយ AI កែច្នៃ Watermark និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube ។  
     """)
 
@@ -456,7 +373,7 @@ st.markdown("""
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -470,7 +387,7 @@ with tab1:
         horizontal=True
     )
 
-    enable_watermark = st.checkbox("✨ បើកដំណើរการដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
+    enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
     watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
 
     media_file_path = None
@@ -533,209 +450,4 @@ with tab1:
                 try:
                     client = openai.OpenAI(api_key=OPENAI_API_KEY)
                     response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[{"role": "user", "content": f"Write a social media caption and hashtags based on this prompt: {caption_prompt}"}]
-                    )
-                    generated_caption = response.choices[0].message.content
-                    st.success("AI (ChatGPT) បានបង្កើត Caption រួចរាល់!")
-                    st.write(generated_caption)
-                except Exception as e:
-                    st.error(f"មានកំហុសក្នុងការតភ្ជាប់ OpenAI API៖ {e}")
-            else:
-                st.warning("មិនមាន OPENAI_API_KEY នៅក្នុងប្រព័ន្ធទេ។")
-
-    final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.subheader("🎬 ជ្រើសរើសវេទិកាសម្រាប់ការបញ្ជូន (Multi-Platform Selection)")
-    col_a, col_b, col_c = st.columns(3)
-    with col_a:
-        pub_fb = st.checkbox("📘 Facebook", value=True)
-    with col_b:
-        pub_tiktok = st.checkbox("🎵 TikTok")
-    with col_c:
-        pub_yt = st.checkbox("📺 YouTube")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    if st.button("🚀 ចាប់ផ្តើមដំណើរការ Upload ទៅកាន់ Platform", type="primary"):
-        if media_file_path and os.path.exists(media_file_path):
-            st.info("ប្រព័ន្ធកំពុងដំណើរការបញ្ជូនមាតិកា...")
-            results = []
-            
-            if pub_fb:
-                res_fb = upload_to_facebook(media_file_path, final_caption, post_type=post_type)
-                results.append(res_fb)
-            if pub_tiktok:
-                res_tk = upload_to_tiktok(media_file_path, final_caption)
-                results.append(res_tk)
-            if pub_yt:
-                res_yt = upload_to_youtube(media_file_path, "AI Generated Content", final_caption)
-                results.append(res_yt)
-                
-            st.success("ការបញ្ជូនបានបញ្ចប់!")
-            st.json(results)
-            
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            history_entry = {
-                "user": f"{current_user['name']} ({current_user['email']})",
-                "type": post_type, 
-                "file": media_file_path, 
-                "caption": final_caption, 
-                "results": results, 
-                "time": timestamp
-            }
-            
-            try:
-                if os.path.exists("history.json"):
-                    with open("history.json", "r", encoding="utf-8") as f:
-                        history_data = json.load(f)
-                else:
-                    history_data = []
-                    
-                history_data.append(history_entry)
-                with open("history.json", "w", encoding="utf-8") as f:
-                    json.dump(history_data, f, ensure_ascii=False, indent=4)
-                st.info("✅ បានរក្សាទុកប្រវត្តិក្នុង Local history.json រួចរាល់។")
-            except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងការរក្សាទុក Local history.json៖ {e}")
-                
-            if gsheet_json and gsheet_url:
-                try:
-                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                    creds_dict = json.loads(gsheet_json)
-                    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-                    client = gspread.authorize(creds)
-                    
-                    sheet = client.open_by_url(gsheet_url).sheet1
-                    sheet.append_row([f"{current_user['name']} ({current_user['email']})", post_type, media_file_path, final_caption, str(results), timestamp])
-                    
-                    st.success("✅ បានកត់ត្រាទិន្នន័យចូលទៅក្នុង Google Sheets ដោយជោគជ័យ!")
-                except Exception as e:
-                    st.error(f"មានបញ្ហាក្នុងការកត់ត្រាចូល Google Sheets៖ {e}")
-        else:
-            st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# --- TAB 2: ANALYTICS DASHBOARD ---
-with tab2:
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.subheader("📊 Analytics & Performance Dashboard")
-    st.markdown("ផ្ទាំងបង្ហាញស្ថិតិ និងការវិភាគទូទៅនៃការបញ្ជូនមាតិកាទៅកាន់ Social Media Platforms។")
-
-    if os.path.exists("history.json"):
-        try:
-            with open("history.json", "r", encoding="utf-8") as f:
-                hist_data = json.load(f)
-            
-            total_posts = len(hist_data)
-            fb_count = sum(1 for item in hist_data if any("Facebook" in str(r)) for r in item.get("results", []))
-            tiktok_count = sum(1 for item in hist_data if any("TikTok" in str(r)) for r in item.get("results", []))
-            yt_count = sum(1 for item in hist_data if any("YouTube" in str(r)) for r in item.get("results", []))
-
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("📌 ការផុសសរុប (Total Posts)", total_posts)
-            m2.metric("📘 Facebook Posts", fb_count)
-            m3.metric("🎵 TikTok Posts", tiktok_count)
-            m4.metric("📺 YouTube Posts", yt_count)
-
-            st.markdown("---")
-            st.subheader("📈 ប្រវត្តិនៃការប្រើប្រាស់តាមវេទិកា")
-            
-            if total_posts > 0:
-                st.bar_chart({
-                    "Facebook": fb_count,
-                    "TikTok": tiktok_count,
-                    "YouTube": yt_count
-                })
-            else:
-                st.info("មិនទាន់មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់បង្ហាញជាក្រាហ្វិក (Chart) ទេ។")
-
-        except Exception as e:
-            st.error(f"មានបញ្ហាក្នុងការអានទិន្នន័យសម្រាប់ Analytics៖ {e}")
-    else:
-        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារ (history.json) នៅឡើយទេ។ សូមធ្វើការ Upload មាតិកាសិន។")
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# --- TAB 3: VIEW HISTORY ---
-with tab3:
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.subheader("📊 ពិនិត្យប្រវត្តិการងារ (View History)")
-
-    if st.button("🔄 ផ្ទុកទិន្នន័យប្រវត្តិការងារឡើងវិញ"):
-        st.rerun()
-
-    if storage_mode == "Local history.json":
-        if os.path.exists("history.json"):
-            try:
-                with open("history.json", "r", encoding="utf-8") as f:
-                    history_data = json.load(f)
-                if history_data:
-                    st.dataframe(history_data, use_container_width=True)
-                else:
-                    st.info("មិនទាន់មានប្រវត្តិការងារក្នុង Local history.json នៅឡើយទេ។")
-            except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងការអានឯកសារ history.json៖ {e}")
-        else:
-            st.info("មិនទាន់មានឯកសារ history.json ទេ។")
-
-    elif storage_mode == "Google Sheets":
-        if gsheet_json and gsheet_url:
-            try:
-                scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                creds_dict = json.loads(gsheet_json)
-                creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-                client = gspread.authorize(creds)
-                
-                sheet = client.open_by_url(gsheet_url).sheet1
-                records = sheet.get_all_records()
-                
-                if records:
-                    st.dataframe(records, use_container_width=True)
-                else:
-                    st.info("Google Sheet របស់អ្នកនៅទទេ។")
-            except Exception as e:
-                st.error(f"មានបញ្ហាក្នុងការទាញយកទិន្នន័យពី Google Sheets៖ {e}")
-        else:
-            st.warning("សូមបំពេញ Service Account JSON Key និង Spreadsheet URL ឱ្យបានត្រឹមត្រូវនៅ Sidebar ជាមុនសិន ដើម្បីមើលប្រវត្តិពី Google Sheets។")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# --- TAB 4: SUPPORT CHAT ---
-with tab4:
-    st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support Chat & AI Assistant)")
-    st.markdown("សួរសំណួរ ឬពិភាក្សាជាមួយ AI Support អំពីបញ្ហាបច្ចេកទេស ការប្រើប្រាស់ API ឬគន្លឹះផ្សេងៗក្នុងប្រព័ន្ធ **UNME AI Social Media**។")
-
-    if "support_messages" not in st.session_state:
-        st.session_state["support_messages"] = [
-            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant របស់ UNME (by Hab Rithy)។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
-        ]
-
-    for msg in st.session_state["support_messages"]:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-
-    if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីនេះ..."):
-        st.session_state["support_messages"].append({"role": "user", "content": user_query})
-        with st.chat_message("user"):
-            st.markdown(user_query)
-
-        with st.chat_message("assistant"):
-            with st.spinner("កំពុងពិចារណា..."):
-                try:
-                    if GEMINI_API_KEY:
-                        model = genai.GenerativeModel('gemini-1.5-flash')
-                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media built by Hab Rithy'. Answer the user's question professionally: {user_query}")
-                        bot_reply = chat_response.text
-                    else:
-                        bot_reply = "សូមកំណត់ GEMINI_API_KEY ក្នុង .env ជាមុនសិន ដើម្បីឱ្យ Support AI អាចដំណើរការឆ្លើយតបបាន។"
-                    
-                    st.markdown(bot_reply)
-                    st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
-                except Exception as e:
-                    err_msg = f"មានបញ្ហាក្នុងការភ្ជាប់ AI Support៖ {e}"
-                    st.error(err_msg)
-                    st.session_state["support_messages"].append({"role": "assistant", "content": err_msg})
-    st.markdown('</div>', unsafe_allow_html=True)
+                        model="gpt
