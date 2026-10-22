@@ -28,13 +28,13 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- DARK NEON CUSTOM CSS & HTML STYLING ---
+# --- DARK NEON CUSTOM CSS & HTML STYLING (WHITE TEXT & NEON BLUE TITLES) ---
 st.markdown("""
     <style>
         /* Global Reset & Dark Theme Background */
         .stApp {
             background-color: #0b0f19;
-            color: #f8fafc;
+            color: #ffffff !important;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         .block-container {
@@ -43,7 +43,17 @@ st.markdown("""
             max-width: 98% !important;
         }
         
-        /* Force Metric Text Color to White for Dark Theme */
+        /* Force All Text and Labels to White */
+        p, span, label, div, .stMarkdown, .stRadio label, .stCheckbox label, .stCaption {
+            color: #ffffff !important;
+        }
+        
+        /* Force Titles and Subheaders to Neon Blue */
+        h1, h2, h3, h4, h5, h6, .stSubheader {
+            color: #60a5fa !important;
+        }
+        
+        /* Force Metric Text Color to White */
         [data-testid="stMetricValue"], [data-testid="stMetricLabel"], [data-testid="stMetricDelta"] {
             color: #ffffff !important;
         }
@@ -56,11 +66,7 @@ st.markdown("""
             border-radius: 16px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
             margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-        .neon-card:hover {
-            border-color: #3b82f6;
-            box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.15);
+            color: #ffffff;
         }
 
         /* Gradient Stat Cards */
@@ -191,7 +197,7 @@ if not st.session_state["logged_in"]:
     with col2:
         st.markdown('<div class="auth-box">', unsafe_allow_html=True)
         st.markdown("<h2 style='text-align: center; color: #60a5fa; margin-bottom: 10px;'>🚀 UNME AI Social Media</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #9ca3af; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប (by Hab Rithy)</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #ffffff; font-size: 14px; margin-bottom: 25px;'>ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្មទំនើប (by Hab Rithy)</p>", unsafe_allow_html=True)
         
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["🔑 ចូលប្រព័ន្ធ (Sign In)", "📝 ចុះឈ្មោះ (Sign Up)"], horizontal=True)
         st.markdown("<br>", unsafe_allow_html=True)
@@ -361,14 +367,14 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
     * **បង្កើតដោយ (by):** Hab Rithy  
-    * **ជំនាន់ (Version):** 4.1 Dark Neon Pro  
+    * **ជំនាន់ (Version):** 4.2 Dark Neon Pro  
     """)
 
 # --- TOP HEADER ---
 st.markdown("""
     <div style="background: #111827; padding: 20px 24px; border-radius: 16px; border: 1px solid #1f2937; margin-bottom: 24px;">
         <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #60a5fa;">🚀 UNME AI Social Media Dashboard</h1>
-        <p style="margin:4px 0 0 0; color: #9ca3af; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube (by Hab Rithy)</p>
+        <p style="margin:4px 0 0 0; color: #ffffff; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube (by Hab Rithy)</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -389,22 +395,22 @@ col_m1, col_m2, col_m3 = st.columns(3)
 with col_m1:
     st.markdown(f"""
         <div class="stat-card-1">
-            <div style="font-size: 14px; font-weight: 600; opacity: 0.9;">📌 Total Posts / Videos</div>
-            <div style="font-size: 28px; font-weight: 800; margin-top: 5px;">{total_posts}</div>
+            <div style="font-size: 14px; font-weight: 600; opacity: 0.9; color: #ffffff;">📌 Total Posts / Videos</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #ffffff;">{total_posts}</div>
         </div>
     """, unsafe_allow_html=True)
 with col_m2:
     st.markdown(f"""
         <div class="stat-card-2">
-            <div style="font-size: 14px; font-weight: 600; opacity: 0.9;">📘 Facebook Published</div>
-            <div style="font-size: 28px; font-weight: 800; margin-top: 5px;">{fb_c}</div>
+            <div style="font-size: 14px; font-weight: 600; opacity: 0.9; color: #ffffff;">📘 Facebook Published</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #ffffff;">{fb_c}</div>
         </div>
     """, unsafe_allow_html=True)
 with col_m3:
     st.markdown(f"""
         <div class="stat-card-3">
-            <div style="font-size: 14px; font-weight: 600; opacity: 0.9;">🎵 TikTok Published</div>
-            <div style="font-size: 28px; font-weight: 800; margin-top: 5px;">{tk_c}</div>
+            <div style="font-size: 14px; font-weight: 600; opacity: 0.9; color: #ffffff;">🎵 TikTok Published</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #ffffff;">{tk_c}</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -414,7 +420,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -613,7 +619,7 @@ with tab2:
 # --- TAB 3: VIEW HISTORY ---
 with tab3:
     st.markdown('<div class="neon-card">', unsafe_allow_html=True)
-    st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
+    st.subheader("📊 ពិនិត្យប្រវត្តិการងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
         st.rerun()
