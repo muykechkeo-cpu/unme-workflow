@@ -443,7 +443,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ពិនិត្យប្រវត្តិการងារ (View History)", 
+    "📊 ពិនិត្យប្រវត្តិការងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -642,7 +642,7 @@ with tab2:
 # --- TAB 3: VIEW HISTORY ---
 with tab3:
     st.markdown('<div class="neon-card">', unsafe_allow_html=True)
-    st.subheader("📊 ពិនិត្យប្រវត្តិการងារ (View History)")
+    st.subheader("📊 ពិនិត្យប្រវត្តិការងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
         st.rerun()
