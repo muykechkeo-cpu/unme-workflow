@@ -416,7 +416,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 5.8 Soft UI Pro  
+    * **ជំនាន់ (Version):** 5.9 Soft UI Pro  
     """)
 
 # --- TOP HEADER ---
@@ -481,7 +481,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
     "📈 Analytics Dashboard",
-    "📊 ប្រវត្តិการងារ (View History)", 
+    "📊 ប្រវត្តិការងារ (View History)", 
     "💬 Support Chat & AI Assistant"
 ])
 
@@ -686,7 +686,7 @@ with tab2:
 # --- TAB 3: VIEW HISTORY ---
 with tab3:
     st.markdown('<div class="clean-card">', unsafe_allow_html=True)
-    st.subheader("📊 ប្រវត្តិการងារ (View History)")
+    st.subheader("📊 ប្រវត្តិការងារ (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
         st.rerun()
@@ -712,7 +712,7 @@ with tab3:
                 if history_data:
                     st.dataframe(history_data, use_container_width=True)
                 else:
-                    st.info("ប្រវត្តិการងារទទេ។")
+                    st.info("ប្រវត្តិការងារទទេ។")
             except Exception as e:
                 st.error(f"មានបញ្ហា៖ {e}")
         else:
