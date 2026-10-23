@@ -143,7 +143,7 @@ def is_valid_email(email):
     pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     return re.match(pattern, email) is not None
 
-# --- USER DATABASE MANAGEMENT (WITH PER-USER API KEYS STORAGE) ---
+# --- USER DATABASE MANAGEMENT ---
 USER_DB_FILE = "users.json"
 
 def load_users():
@@ -184,7 +184,8 @@ def update_user_api_key(email, key_name, key_value):
             users[email]["api_keys"] = {}
         users[email]["api_keys"][key_name] = key_value
         save_users(users)
-        st.session_state["user_info"]["api_keys"][key_name] = key_value
+        if st.session_state.get("user_info"):
+            st.session_state["user_info"]["api_keys"][key_name] = key_value
 
 # --- SQLITE DATABASE INITIALIZATION ---
 SQLITE_DB = "unme_social.db"
@@ -220,10 +221,23 @@ if 'scheduler_started' not in st.session_state:
     bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
     bg_thread.start()
 
-# --- AUTHENTICATION STATE HANDLING ---
+# --- PERSISTENT SESSION MANAGEMENT (KEEP LOGGED IN ON REFRESH) ---
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
+
+# Check Query Params for persistent login after page refresh
+query_params = st.query_params
+if not st.session_state["logged_in"] and "user" in query_params:
+    saved_user_email = query_params["user"]
+    all_users = load_users()
+    if saved_user_email in all_users:
+        st.session_state["logged_in"] = True
+        u_data = all_users[saved_user_email]
+        u_data["email"] = saved_user_email
+        if "api_keys" not in u_data:
+            u_data["api_keys"] = {"gemini": "", "openai": "", "fb_page_id": "", "fb_access_token": "", "tiktok_token": "", "yt_secret": ""}
+        st.session_state["user_info"] = u_data
 
 # --- AUTH INTERFACE ---
 if not st.session_state["logged_in"]:
@@ -254,6 +268,9 @@ if not st.session_state["logged_in"]:
                     if "api_keys" not in user_data:
                         user_data["api_keys"] = {"gemini": "", "openai": "", "fb_page_id": "", "fb_access_token": "", "tiktok_token": "", "yt_secret": ""}
                     st.session_state["user_info"] = user_data
+                    
+                    # Store session in URL query params so refresh doesn't log out
+                    st.query_params["user"] = signin_email
                     st.success("ចូលប្រព័ន្ធជោគជ័យ!")
                     st.rerun()
                 else:
@@ -292,6 +309,9 @@ if not st.session_state["logged_in"]:
                     st.session_state["logged_in"] = True
                     new_user_data["email"] = signup_email
                     st.session_state["user_info"] = new_user_data
+                    
+                    # Store session in URL query params
+                    st.query_params["user"] = signup_email
                     
                     st.success("បង្កើតគណនី និងចូលប្រព័ន្ធជោគជ័យ!")
                     time.sleep(0.5)
@@ -368,6 +388,8 @@ st.sidebar.caption(f"Email: {current_user['email']}")
 if st.sidebar.button("🚪 Log out"):
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
+    # Clear URL params on manual Sign Out only
+    st.query_params.clear()
     st.rerun()
 
 st.sidebar.markdown("---")
@@ -447,7 +469,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 6.1 Persistent API Keys  
+    * **ជំនាន់ (Version):** 6.2 Persistent Session  
     """)
 
 # --- TOP HEADER ---
