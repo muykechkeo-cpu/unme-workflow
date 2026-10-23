@@ -13,7 +13,7 @@ st.set_page_config(
 # ----------------- DATABASE CONFIGURATION & AUTO-CREATION -----------------
 DB_USER = "postgres"
 DB_PASSWORD = "039601"  
-DB_HOST = "localhost"
+DB_HOST = "127.0.0.1"
 DB_PORT = "5432"
 DB_NAME = "unme_social"
 
