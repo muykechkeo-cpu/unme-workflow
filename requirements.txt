@@ -7,3 +7,6 @@ opencv-python-headless
 Pillow
 python-dotenv
 requests
+sqlalchemy
+psycopg2-binary
+pandas
