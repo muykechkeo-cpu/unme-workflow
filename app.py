@@ -22,13 +22,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- SECURE CREDENTIALS LOADING & STATE INITIALIZATION ---
-if "gemini_api_key" not in st.session_state:
-    st.session_state["gemini_api_key"] = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
-
-if "openai_api_key" not in st.session_state:
-    st.session_state["openai_api_key"] = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY") or ""
-
 # --- NEUMORPHIC SOFT UI CUSTOM CSS & HTML STYLING ---
 st.markdown("""
     <style>
@@ -150,7 +143,7 @@ def is_valid_email(email):
     pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     return re.match(pattern, email) is not None
 
-# --- USER DATABASE MANAGEMENT ---
+# --- USER DATABASE MANAGEMENT (WITH PER-USER API KEYS STORAGE) ---
 USER_DB_FILE = "users.json"
 
 def load_users():
@@ -158,7 +151,15 @@ def load_users():
         "admin@unme.com": {
             "password": "adminpassword",
             "name": "Hab Rithy",
-            "role": "admin"
+            "role": "admin",
+            "api_keys": {
+                "gemini": "",
+                "openai": "",
+                "fb_page_id": "",
+                "fb_access_token": "",
+                "tiktok_token": "",
+                "yt_secret": ""
+            }
         }
     }
     if os.path.exists(USER_DB_FILE):
@@ -175,6 +176,15 @@ def load_users():
 def save_users(users):
     with open(USER_DB_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=4)
+
+def update_user_api_key(email, key_name, key_value):
+    users = load_users()
+    if email in users:
+        if "api_keys" not in users[email]:
+            users[email]["api_keys"] = {}
+        users[email]["api_keys"][key_name] = key_value
+        save_users(users)
+        st.session_state["user_info"]["api_keys"][key_name] = key_value
 
 # --- SQLITE DATABASE INITIALIZATION ---
 SQLITE_DB = "unme_social.db"
@@ -241,6 +251,8 @@ if not st.session_state["logged_in"]:
                     st.session_state["logged_in"] = True
                     user_data = users_db[signin_email]
                     user_data["email"] = signin_email
+                    if "api_keys" not in user_data:
+                        user_data["api_keys"] = {"gemini": "", "openai": "", "fb_page_id": "", "fb_access_token": "", "tiktok_token": "", "yt_secret": ""}
                     st.session_state["user_info"] = user_data
                     st.success("ចូលប្រព័ន្ធជោគជ័យ!")
                     st.rerun()
@@ -261,20 +273,25 @@ if not st.session_state["logged_in"]:
                 elif signup_email in users_db:
                     st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ!")
                 else:
-                    users_db[signup_email] = {
+                    new_user_data = {
                         "password": signup_pass,
                         "name": signup_name,
-                        "role": "user"
+                        "role": "user",
+                        "api_keys": {
+                            "gemini": "",
+                            "openai": "",
+                            "fb_page_id": "",
+                            "fb_access_token": "",
+                            "tiktok_token": "",
+                            "yt_secret": ""
+                        }
                     }
+                    users_db[signup_email] = new_user_data
                     save_users(users_db)
                     
-                    # Log in newly created user account immediately
                     st.session_state["logged_in"] = True
-                    st.session_state["user_info"] = {
-                        "email": signup_email,
-                        "name": signup_name,
-                        "role": "user"
-                    }
+                    new_user_data["email"] = signup_email
+                    st.session_state["user_info"] = new_user_data
                     
                     st.success("បង្កើតគណនី និងចូលប្រព័ន្ធជោគជ័យ!")
                     time.sleep(0.5)
@@ -284,6 +301,7 @@ if not st.session_state["logged_in"]:
     st.stop()
 
 current_user = st.session_state["user_info"]
+user_api_keys = current_user.get("api_keys", {})
 
 # --- MEDIA PROCESSING FUNCTIONS ---
 def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
@@ -355,22 +373,23 @@ if st.sidebar.button("🚪 Log out"):
 st.sidebar.markdown("---")
 st.sidebar.title("⚙️ System Configuration")
 
+# AI PROVIDER SETTINGS WITH AUTO-SAVE TO USER ACCOUNT
 with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
     ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
     if ai_provider == "Google Gemini":
-        gemini_input = st.text_input("Google Gemini API Key", value=st.session_state["gemini_api_key"], type="password")
-        if gemini_input != st.session_state["gemini_api_key"]:
-            st.session_state["gemini_api_key"] = gemini_input
-            st.success("✅ បានរក្សាទុក Gemini API Key")
-        if st.session_state["gemini_api_key"]:
-            genai.configure(api_key=st.session_state["gemini_api_key"])
+        saved_gemini = user_api_keys.get("gemini", "")
+        gemini_input = st.text_input("Google Gemini API Key", value=saved_gemini, type="password")
+        if gemini_input != saved_gemini:
+            update_user_api_key(current_user["email"], "gemini", gemini_input)
+            st.success("✅ បានចងចាំ Gemini API Key ក្នុង Account!")
+            st.rerun()
     else:
-        openai_input = st.text_input("OpenAI API Key", value=st.session_state["openai_api_key"], type="password")
-        if openai_input != st.session_state["openai_api_key"]:
-            st.session_state["openai_api_key"] = openai_input
-            st.success("✅ បានរក្សាទុក OpenAI API Key")
-        if st.session_state["openai_api_key"]:
-            openai.api_key = st.session_state["openai_api_key"]
+        saved_openai = user_api_keys.get("openai", "")
+        openai_input = st.text_input("OpenAI API Key", value=saved_openai, type="password")
+        if openai_input != saved_openai:
+            update_user_api_key(current_user["email"], "openai", openai_input)
+            st.success("✅ បានចងចាំ OpenAI API Key ក្នុង Account!")
+            st.rerun()
 
 with st.sidebar.expander("📁 គ្រប់គ្រងទិន្នន័យ (Data Storage)", expanded=True):
     storage_type = st.selectbox("ជ្រើសរើសទីតាំងរើស Store Data", [
@@ -399,14 +418,25 @@ with st.sidebar.expander("📁 គ្រប់គ្រងទិន្នន័�
                 st.download_button("📥 Download History Data", f, file_name="history.json", mime="application/json")
 
 with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
-    fb_page_id = st.text_input("Facebook Page ID")
-    fb_access_token = st.text_input("Facebook Access Token", type="password")
+    saved_fb_id = user_api_keys.get("fb_page_id", "")
+    saved_fb_token = user_api_keys.get("fb_access_token", "")
+    fb_page_id = st.text_input("Facebook Page ID", value=saved_fb_id)
+    fb_access_token = st.text_input("Facebook Access Token", value=saved_fb_token, type="password")
+    if fb_page_id != saved_fb_id or fb_access_token != saved_fb_token:
+        update_user_api_key(current_user["email"], "fb_page_id", fb_page_id)
+        update_user_api_key(current_user["email"], "fb_access_token", fb_access_token)
 
 with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
-    tiktok_token = st.text_input("TikTok Access Token", type="password", label_visibility="collapsed")
+    saved_tk_token = user_api_keys.get("tiktok_token", "")
+    tiktok_token = st.text_input("TikTok Access Token", value=saved_tk_token, type="password")
+    if tiktok_token != saved_tk_token:
+        update_user_api_key(current_user["email"], "tiktok_token", tiktok_token)
 
 with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
-    yt_secret = st.text_input("YouTube Client Secret", type="password", label_visibility="collapsed")
+    saved_yt_secret = user_api_keys.get("yt_secret", "")
+    yt_secret = st.text_input("YouTube Client Secret", value=saved_yt_secret, type="password")
+    if yt_secret != saved_yt_secret:
+        update_user_api_key(current_user["email"], "yt_secret", yt_secret)
 
 with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
     schedule_freq = st.selectbox("Schedule Frequency", ["Manual / Scheduled", "Every 1 hour", "Every 6 hours", "Daily"])
@@ -417,7 +447,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 6.0 Multi-User Isolation  
+    * **ជំនាន់ (Version):** 6.1 Persistent API Keys  
     """)
 
 # --- TOP HEADER ---
@@ -449,7 +479,6 @@ else:
         try:
             with open("history.json", "r", encoding="utf-8") as f:
                 hist_data = json.load(f)
-            # Filter posts for THIS specific user account only
             user_hist = [item for item in hist_data if item.get("user_email") == user_email or user_email in item.get("user", "")]
             total_posts = len(user_hist)
             fb_c = sum(1 for item in user_hist for r in item.get("results", []) if "Facebook" in str(r))
@@ -546,10 +575,10 @@ with tab1:
     generated_caption = ""
     if st.button(f"✨ បង្កើត Caption ដោយប្រើ {ai_provider}", type="primary"):
         if ai_provider == "Google Gemini":
-            active_gemini_key = st.session_state.get("gemini_api_key", "")
-            if active_gemini_key:
+            gemini_key = user_api_keys.get("gemini", "")
+            if gemini_key:
                 try:
-                    genai.configure(api_key=active_gemini_key)
+                    genai.configure(api_key=gemini_key)
                     model = genai.GenerativeModel('gemini-1.5-flash')
                     response = model.generate_content(f"Write a social media caption and hashtags based on this prompt: {caption_prompt}")
                     generated_caption = response.text
@@ -558,12 +587,12 @@ with tab1:
                 except Exception as e:
                     st.error(f"មានកំហុស៖ {e}")
             else:
-                st.warning("សូមកំណត់ GEMINI_API_KEY ជាមុនសិនក្នុង Sidebar!")
+                st.warning("សូមបញ្ចូល និងរក្សាទុក Google Gemini API Key ក្នុង Sidebar ជាមុនសិន!")
         else:
-            active_openai_key = st.session_state.get("openai_api_key", "")
-            if active_openai_key:
+            openai_key = user_api_keys.get("openai", "")
+            if openai_key:
                 try:
-                    client = openai.OpenAI(api_key=active_openai_key)
+                    client = openai.OpenAI(api_key=openai_key)
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[{"role": "user", "content": f"Write a social media caption and hashtags based on this prompt: {caption_prompt}"}]
@@ -574,7 +603,7 @@ with tab1:
                 except Exception as e:
                     st.error(f"មានកំហុស៖ {e}")
             else:
-                st.warning("សូមកំណត់ OPENAI_API_KEY ជាមុនសិនក្នុង Sidebar!")
+                st.warning("សូមបញ្ចូល និងរក្សាទុក OpenAI API Key ក្នុង Sidebar ជាមុនសិន!")
 
     final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -720,7 +749,6 @@ with tab3:
             try:
                 with open("history.json", "r", encoding="utf-8") as f:
                     history_data = json.load(f)
-                # Filter history for current logged in user only
                 user_filtered_history = [item for item in history_data if item.get("user_email") == user_email or user_email in item.get("user", "")]
                 if user_filtered_history:
                     st.dataframe(user_filtered_history, use_container_width=True)
@@ -754,14 +782,14 @@ with tab4:
         with st.chat_message("assistant"):
             with st.spinner("កំពុងពិចារណា..."):
                 try:
-                    active_gemini_key = st.session_state.get("gemini_api_key", "")
-                    if active_gemini_key:
-                        genai.configure(api_key=active_gemini_key)
+                    gemini_key = user_api_keys.get("gemini", "")
+                    if gemini_key:
+                        genai.configure(api_key=gemini_key)
                         model = genai.GenerativeModel('gemini-1.5-flash')
                         chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media'. Answer professionally: {user_query}")
                         bot_reply = chat_response.text
                     else:
-                        bot_reply = "សូមកំណត់ GEMINI_API_KEY ជាមុនសិនក្នុង Sidebar!"
+                        bot_reply = "សូមបញ្ចូល និងរក្សាទុក Google Gemini API Key ក្នុង Sidebar ជាមុនសិន!"
                     
                     st.markdown(bot_reply)
                     st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
