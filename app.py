@@ -16,18 +16,18 @@ from multi_platform import upload_to_youtube, upload_to_tiktok, upload_to_facebo
 # Load environment variables
 load_dotenv()
 
-# --- SECURE CREDENTIALS LOADING ---
-GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
-OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
-
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-
 st.set_page_config(
     page_title="UNME AI Social Media - Soft UI Pro",
     page_icon="🚀",
     layout="wide"
 )
+
+# --- SECURE CREDENTIALS LOADING & STATE INITIALIZATION ---
+if "gemini_api_key" not in st.session_state:
+    st.session_state["gemini_api_key"] = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
+
+if "openai_api_key" not in st.session_state:
+    st.session_state["openai_api_key"] = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY") or ""
 
 # --- NEUMORPHIC SOFT UI CUSTOM CSS & HTML STYLING ---
 st.markdown("""
@@ -185,7 +185,8 @@ def init_sqlite_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user TEXT,
+            user_email TEXT,
+            user_name TEXT,
             type TEXT,
             file TEXT,
             caption TEXT,
@@ -220,7 +221,7 @@ if not st.session_state["logged_in"]:
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown('<div class="auth-box">', unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center; color: #1e293b; font-weight: 700; margin-bottom: 5px;'>Sign Up</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #1e293b; font-weight: 700; margin-bottom: 5px;'>Sign Up / Sign In</h2>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #64748b; font-size: 13px; margin-bottom: 25px;'>UNME AI Social Media Management</p>", unsafe_allow_html=True)
         
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["📝 Sign Up", "🔑 Sign In"], horizontal=True)
@@ -252,7 +253,7 @@ if not st.session_state["logged_in"]:
             signup_pass = st.text_input("Password", type="password", key="su_pass")
             st.markdown("<br>", unsafe_allow_html=True)
             
-            if st.button("Create account", type="primary"):
+            if st.button("Create Account & Sign In", type="primary"):
                 if not signup_name or not signup_email or not signup_pass:
                     st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យបានត្រឹមត្រូវ។")
                 elif not is_valid_email(signup_email):
@@ -267,6 +268,7 @@ if not st.session_state["logged_in"]:
                     }
                     save_users(users_db)
                     
+                    # Log in newly created user account immediately
                     st.session_state["logged_in"] = True
                     st.session_state["user_info"] = {
                         "email": signup_email,
@@ -356,20 +358,19 @@ st.sidebar.title("⚙️ System Configuration")
 with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
     ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
     if ai_provider == "Google Gemini":
-        if GEMINI_API_KEY:
-            st.success("✅ Gemini API Key បានផ្ទុកស្រាប់")
-        else:
-            gemini_api_key_input = st.text_input("Google Gemini API Key", type="password")
-            if gemini_api_key_input:
-                genai.configure(api_key=gemini_api_key_input)
+        gemini_input = st.text_input("Google Gemini API Key", value=st.session_state["gemini_api_key"], type="password")
+        if gemini_input != st.session_state["gemini_api_key"]:
+            st.session_state["gemini_api_key"] = gemini_input
+            st.success("✅ បានរក្សាទុក Gemini API Key")
+        if st.session_state["gemini_api_key"]:
+            genai.configure(api_key=st.session_state["gemini_api_key"])
     else:
-        if OPENAI_API_KEY:
-            st.success("✅ OpenAI API Key បានផ្ទុកស្រាប់")
-            openai.api_key = OPENAI_API_KEY
-        else:
-            openai_api_key_input = st.text_input("OpenAI API Key", type="password")
-            if openai_api_key_input:
-                openai.api_key = openai_api_key_input
+        openai_input = st.text_input("OpenAI API Key", value=st.session_state["openai_api_key"], type="password")
+        if openai_input != st.session_state["openai_api_key"]:
+            st.session_state["openai_api_key"] = openai_input
+            st.success("✅ បានរក្សាទុក OpenAI API Key")
+        if st.session_state["openai_api_key"]:
+            openai.api_key = st.session_state["openai_api_key"]
 
 with st.sidebar.expander("📁 គ្រប់គ្រងទិន្នន័យ (Data Storage)", expanded=True):
     storage_type = st.selectbox("ជ្រើសរើសទីតាំងរើស Store Data", [
@@ -416,7 +417,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 5.9 Soft UI Pro  
+    * **ជំនាន់ (Version):** 6.0 Multi-User Isolation  
     """)
 
 # --- TOP HEADER ---
@@ -427,13 +428,15 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- METRIC CARDS OVERVIEW (Supports both JSON & SQLite) ---
+# --- METRIC CARDS OVERVIEW (PER USER ACCOUNT) ---
 total_posts, fb_c, tk_c = 0, 0, 0
+user_email = current_user["email"]
+
 if storage_type == "SQLite Database (unme_social.db)":
     try:
         conn = sqlite3.connect(SQLITE_DB)
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*), SUM(results LIKE '%Facebook%'), SUM(results LIKE '%TikTok%') FROM history")
+        cursor.execute("SELECT COUNT(*), SUM(results LIKE '%Facebook%'), SUM(results LIKE '%TikTok%') FROM history WHERE user_email = ?", (user_email,))
         row = cursor.fetchone()
         total_posts = row[0] if row[0] else 0
         fb_c = row[1] if row[1] else 0
@@ -446,9 +449,11 @@ else:
         try:
             with open("history.json", "r", encoding="utf-8") as f:
                 hist_data = json.load(f)
-            total_posts = len(hist_data)
-            fb_c = sum(1 for item in hist_data for r in item.get("results", []) if "Facebook" in str(r))
-            tk_c = sum(1 for item in hist_data for r in item.get("results", []) if "TikTok" in str(r))
+            # Filter posts for THIS specific user account only
+            user_hist = [item for item in hist_data if item.get("user_email") == user_email or user_email in item.get("user", "")]
+            total_posts = len(user_hist)
+            fb_c = sum(1 for item in user_hist for r in item.get("results", []) if "Facebook" in str(r))
+            tk_c = sum(1 for item in user_hist for r in item.get("results", []) if "TikTok" in str(r))
         except:
             pass
 
@@ -456,7 +461,7 @@ col_m1, col_m2, col_m3 = st.columns(3)
 with col_m1:
     st.markdown(f"""
         <div class="stat-card-1">
-            <div style="font-size: 14px; font-weight: 600; color: #64748b;">📌 Total Posts / Videos</div>
+            <div style="font-size: 14px; font-weight: 600; color: #64748b;">📌 Your Total Posts / Videos</div>
             <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #1e293b;">{total_posts}</div>
         </div>
     """, unsafe_allow_html=True)
@@ -541,8 +546,10 @@ with tab1:
     generated_caption = ""
     if st.button(f"✨ បង្កើត Caption ដោយប្រើ {ai_provider}", type="primary"):
         if ai_provider == "Google Gemini":
-            if GEMINI_API_KEY:
+            active_gemini_key = st.session_state.get("gemini_api_key", "")
+            if active_gemini_key:
                 try:
+                    genai.configure(api_key=active_gemini_key)
                     model = genai.GenerativeModel('gemini-1.5-flash')
                     response = model.generate_content(f"Write a social media caption and hashtags based on this prompt: {caption_prompt}")
                     generated_caption = response.text
@@ -551,11 +558,12 @@ with tab1:
                 except Exception as e:
                     st.error(f"មានកំហុស៖ {e}")
             else:
-                st.warning("សូមកំណត់ GEMINI_API_KEY ជាមុនសិន។")
+                st.warning("សូមកំណត់ GEMINI_API_KEY ជាមុនសិនក្នុង Sidebar!")
         else:
-            if OPENAI_API_KEY:
+            active_openai_key = st.session_state.get("openai_api_key", "")
+            if active_openai_key:
                 try:
-                    client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                    client = openai.OpenAI(api_key=active_openai_key)
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[{"role": "user", "content": f"Write a social media caption and hashtags based on this prompt: {caption_prompt}"}]
@@ -566,7 +574,7 @@ with tab1:
                 except Exception as e:
                     st.error(f"មានកំហុស៖ {e}")
             else:
-                st.warning("សូមកំណត់ OPENAI_API_KEY ជាមុនសិន។")
+                st.warning("សូមកំណត់ OPENAI_API_KEY ជាមុនសិនក្នុង Sidebar!")
 
     final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -621,6 +629,8 @@ with tab1:
 
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             history_entry = {
+                "user_email": current_user['email'],
+                "user_name": current_user['name'],
                 "user": f"{current_user['name']} ({current_user['email']})",
                 "type": post_type, 
                 "file": media_file_path, 
@@ -636,10 +646,11 @@ with tab1:
                     conn = sqlite3.connect(SQLITE_DB)
                     cursor = conn.cursor()
                     cursor.execute("""
-                        INSERT INTO history (user, type, file, caption, schedule, results, time)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO history (user_email, user_name, type, file, caption, schedule, results, time)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
-                        history_entry["user"], 
+                        current_user["email"],
+                        current_user["name"], 
                         history_entry["type"], 
                         history_entry["file"], 
                         history_entry["caption"], 
@@ -668,11 +679,11 @@ with tab1:
 # --- TAB 2: ANALYTICS DASHBOARD ---
 with tab2:
     st.markdown('<div class="clean-card">', unsafe_allow_html=True)
-    st.subheader("📊 Analytics & Performance Dashboard")
+    st.subheader(f"📊 Analytics & Performance Dashboard ({current_user['name']})")
     
     if total_posts > 0:
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("📌 ការផុសសរុប", total_posts)
+        m1.metric("📌 ការផុសរបស់អ្នកសរុប", total_posts)
         m2.metric("📘 Facebook", fb_c)
         m3.metric("🎵 TikTok", tk_c)
         m4.metric("📺 YouTube", 0)
@@ -680,13 +691,13 @@ with tab2:
         st.markdown("---")
         st.bar_chart({"Facebook": fb_c, "TikTok": tk_c})
     else:
-        st.info("មិនទាន់មានទិន្នន័យគ្រប់គ្រាន់សម្រាប់បង្ហាញក្រាហ្វិកទេ។")
+        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារសម្រាប់ Account របស់អ្នកនៅឡើយទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TAB 3: VIEW HISTORY ---
+# --- TAB 3: VIEW HISTORY (ISOLATED PER USER) ---
 with tab3:
     st.markdown('<div class="clean-card">', unsafe_allow_html=True)
-    st.subheader("📊 ប្រវត្តិការងារ (View History)")
+    st.subheader(f"📊 ប្រវត្តិការងាររបស់ {current_user['name']} (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
         st.rerun()
@@ -695,13 +706,13 @@ with tab3:
         try:
             conn = sqlite3.connect(SQLITE_DB)
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM history")
+            cursor.execute("SELECT id, type, file, caption, schedule, results, time FROM history WHERE user_email = ?", (user_email,))
             rows = cursor.fetchall()
             conn.close()
             if rows:
                 st.table(rows)
             else:
-                st.info("ប្រវត្តិការងារក្នុង SQLite Database គឺទទេ។")
+                st.info("ប្រវត្តិការងាររបស់អ្នកក្នុង SQLite Database គឺទទេ។")
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
@@ -709,10 +720,12 @@ with tab3:
             try:
                 with open("history.json", "r", encoding="utf-8") as f:
                     history_data = json.load(f)
-                if history_data:
-                    st.dataframe(history_data, use_container_width=True)
+                # Filter history for current logged in user only
+                user_filtered_history = [item for item in history_data if item.get("user_email") == user_email or user_email in item.get("user", "")]
+                if user_filtered_history:
+                    st.dataframe(user_filtered_history, use_container_width=True)
                 else:
-                    st.info("ប្រវត្តិការងារទទេ។")
+                    st.info("មិនទាន់មានប្រវត្តិការងារសម្រាប់ Account របស់អ្នកនៅឡើយទេ។")
             except Exception as e:
                 st.error(f"មានបញ្ហា៖ {e}")
         else:
@@ -741,12 +754,14 @@ with tab4:
         with st.chat_message("assistant"):
             with st.spinner("កំពុងពិចារណា..."):
                 try:
-                    if GEMINI_API_KEY:
+                    active_gemini_key = st.session_state.get("gemini_api_key", "")
+                    if active_gemini_key:
+                        genai.configure(api_key=active_gemini_key)
                         model = genai.GenerativeModel('gemini-1.5-flash')
                         chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media'. Answer professionally: {user_query}")
                         bot_reply = chat_response.text
                     else:
-                        bot_reply = "សូមកំណត់ GEMINI_API_KEY ជាមុនសិន។"
+                        bot_reply = "សូមកំណត់ GEMINI_API_KEY ជាមុនសិនក្នុង Sidebar!"
                     
                     st.markdown(bot_reply)
                     st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
