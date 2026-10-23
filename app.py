@@ -17,8 +17,8 @@ DB_HOST = "localhost"
 DB_PORT = "5432"
 DB_NAME = "unme_social"
 
-# ជំហានទី១៖ តភ្ជាប់ទៅកាន់ Server ដើម (postgres) ដើម្បីពិនិត្យ និងបង្កើត Database ថ្មីដោយស្វ័យប្រវត្តិ
-default_url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/postgres"
+# ជំហានទី១៖ តភ្ជាប់ទៅកាន់ Server ដើមដោយប្រើ psycopg2 Driver ដើម្បីពិនិត្យ និងបង្កើត Database ថ្មីដោយស្វ័យប្រវត្តិ
+default_url = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/postgres"
 default_engine = create_engine(default_url, isolation_level="AUTOCOMMIT")
 
 try:
@@ -31,7 +31,7 @@ except Exception as e:
     st.error(f"❌ មិនអាចបង្កើត Database បានទេ: {e}")
 
 # ជំហានទី២៖ តភ្ជាប់ចូលទៅកាន់ Database unme_social ផ្ទាល់ ដើម្បីបង្កើត Tables (users និង history)
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 @st.cache_resource
 def get_db_engine():
