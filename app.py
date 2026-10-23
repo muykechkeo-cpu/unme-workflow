@@ -94,28 +94,34 @@ st.markdown("""
             color: #1e293b;
         }
 
-        /* Tabs Styling */
+        /* Tabs Styling Fixed */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 12px;
+            gap: 8px;
             background-color: #ffffff;
-            padding: 8px;
+            padding: 10px;
             border-radius: 16px;
             border: 1px solid #e2e8f0;
             box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            display: flex;
+            flex-wrap: wrap;
         }
         .stTabs [data-baseweb="tab"] {
             height: 48px;
-            padding: 0px 24px;
+            padding: 0px 18px;
             background-color: transparent;
             border-radius: 12px;
             font-weight: 600;
             color: #64748b;
             border: none;
+            white-space: nowrap;
         }
         .stTabs [aria-selected="true"] {
             background: linear-gradient(135deg, #f43f5e 0%, #3b82f6 100%) !important;
             color: #ffffff !important;
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        .stTabs [aria-selected="true"] p {
+            color: #ffffff !important;
         }
 
         /* Gradient Buttons Styling */
@@ -226,7 +232,6 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
 
-# Check Query Params for persistent login after page refresh
 query_params = st.query_params
 if not st.session_state["logged_in"] and "user" in query_params:
     saved_user_email = query_params["user"]
@@ -269,7 +274,6 @@ if not st.session_state["logged_in"]:
                         user_data["api_keys"] = {"gemini": "", "openai": "", "fb_page_id": "", "fb_access_token": "", "tiktok_token": "", "yt_secret": ""}
                     st.session_state["user_info"] = user_data
                     
-                    # Store session in URL query params so refresh doesn't log out
                     st.query_params["user"] = signin_email
                     st.success("ចូលប្រព័ន្ធជោគជ័យ!")
                     st.rerun()
@@ -310,7 +314,6 @@ if not st.session_state["logged_in"]:
                     new_user_data["email"] = signup_email
                     st.session_state["user_info"] = new_user_data
                     
-                    # Store session in URL query params
                     st.query_params["user"] = signup_email
                     
                     st.success("បង្កើតគណនី និងចូលប្រព័ន្ធជោគជ័យ!")
@@ -388,14 +391,12 @@ st.sidebar.caption(f"Email: {current_user['email']}")
 if st.sidebar.button("🚪 Log out"):
     st.session_state["logged_in"] = False
     st.session_state["user_info"] = None
-    # Clear URL params on manual Sign Out only
     st.query_params.clear()
     st.rerun()
 
 st.sidebar.markdown("---")
 st.sidebar.title("⚙️ System Configuration")
 
-# AI PROVIDER SETTINGS WITH AUTO-SAVE TO USER ACCOUNT
 with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
     ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
     if ai_provider == "Google Gemini":
@@ -469,7 +470,7 @@ with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស
     st.markdown("""
     ### 🚀 អំពីកម្មវិធី (About)
     **UNME AI Social Media**  
-    * **ជំនាន់ (Version):** 6.2 Persistent Session  
+    * **ជំនាន់ (Version):** 6.3 Fixed Tabs Alignment  
     """)
 
 # --- TOP HEADER ---
@@ -748,7 +749,7 @@ with tab2:
 # --- TAB 3: VIEW HISTORY (ISOLATED PER USER) ---
 with tab3:
     st.markdown('<div class="clean-card">', unsafe_allow_html=True)
-    st.subheader(f"📊 ប្រវត្តិការងាររបស់ {current_user['name']} (View History)")
+    st.subheader(f"📊 ប្រវត្តិการងាររបស់ {current_user['name']} (View History)")
 
     if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
         st.rerun()
@@ -763,7 +764,7 @@ with tab3:
             if rows:
                 st.table(rows)
             else:
-                st.info("ប្រវត្តិការងាររបស់អ្នកក្នុង SQLite Database គឺទទេ។")
+                st.info("ប្រវត្តិการងាររបស់អ្នកក្នុង SQLite Database គឺទទេ។")
         except Exception as e:
             st.error(f"មានបញ្ហា៖ {e}")
     else:
@@ -775,11 +776,11 @@ with tab3:
                 if user_filtered_history:
                     st.dataframe(user_filtered_history, use_container_width=True)
                 else:
-                    st.info("មិនទាន់មានប្រវត្តិការងារសម្រាប់ Account របស់អ្នកនៅឡើយទេ។")
+                    st.info("មិនទាន់មានប្រវត្តិการងារសម្រាប់ Account របស់អ្នកនៅឡើយទេ។")
             except Exception as e:
                 st.error(f"មានបញ្ហា៖ {e}")
         else:
-            st.info("មិនទាន់មានឯកសារប្រវត្តិការងារទេ។")
+            st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 4: SUPPORT CHAT ---
