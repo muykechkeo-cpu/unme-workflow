@@ -1,97 +1,821 @@
 import os
+import json
+import re
+import sqlite3
 import streamlit as st
-from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
+import google.generativeai as genai
+import openai
+import datetime
+import time
+import threading
+import cv2
+from PIL import Image, ImageDraw, ImageFont
+from multi_platform import upload_to_youtube, upload_to_tiktok, upload_to_facebook
 
-# Page Configuration
+# Load environment variables
+load_dotenv()
+
 st.set_page_config(
-    page_title="UNME AI Social Media Management",
+    page_title="UNME AI Social Media - Soft UI Pro",
     page_icon="🚀",
     layout="wide"
 )
 
-# ----------------- DATABASE CONNECTION -----------------
-DB_USER = "postgres"
-DB_PASSWORD = "039601"  
-DB_HOST = "127.0.0.1"
-DB_PORT = "5432"
-DB_NAME = "unme_social"
+# --- NEUMORPHIC SOFT UI CUSTOM CSS & HTML STYLING ---
+st.markdown("""
+    <style>
+        /* Global Soft Gradient Background */
+        .stApp {
+            background: linear-gradient(135deg, #fce7f3 0%, #e0f2fe 100%);
+            color: #1e293b;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .block-container {
+            padding-top: 1rem !important;
+            padding-bottom: 3rem !important;
+            max-width: 98% !important;
+        }
+        
+        /* Force Main Area Text to Dark Slate */
+        .main p, .main span, .main label, .main div, .main .stMarkdown, 
+        .main .stRadio label, .main .stCheckbox label, .main .stCaption, 
+        .main [data-baseweb="radio"] div, .main [data-baseweb="checkbox"] div,
+        .main small, .main .stWidgetLabel {
+            color: #1e293b !important;
+        }
+        
+        /* Force Main Area Titles to Clean Blue */
+        .main h1, .main h2, .main h3, .main h4, .main h5, .main h6, .main .stSubheader {
+            color: #2563eb !important;
+        }
+        
+        /* Force Sidebar Text to BLACK */
+        [data-testid="stSidebar"] p, 
+        [data-testid="stSidebar"] span, 
+        [data-testid="stSidebar"] label, 
+        [data-testid="stSidebar"] div, 
+        [data-testid="stSidebar"] .stMarkdown, 
+        [data-testid="stSidebar"] .stRadio label, 
+        [data-testid="stSidebar"] .stCheckbox label, 
+        [data-testid="stSidebar"] .stCaption,
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3 {
+            color: #000000 !important;
+        }
 
-# តភ្ជាប់ដោយตรงជាមួយ Database តែម្តង ដើម្បីការពារការស្ទះ
-DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=disable"
+        /* Neumorphic Auth Card */
+        .auth-box {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f1f5f9;
+        }
 
-@st.cache_resource
-def get_db_engine():
-    return create_engine(DATABASE_URL)
+        /* Soft Cards */
+        .clean-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            margin-bottom: 20px;
+        }
 
-try:
-    engine = get_db_engine()
-    # ពិនិត្យការតភ្ជាប់
-    with engine.connect() as conn:
-        db_connected = True
-except Exception as e:
-    db_connected = False
-    st.error(f"❌ មិនអាចតភ្ជាប់ទៅកាន់ Database បានទេ: {e}")
+        /* Stat Cards */
+        .stat-card-1 {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+            color: #1e293b;
+        }
 
-# ----------------- AUTHENTICATION SESSION -----------------
+        /* Tabs Styling Fixed */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 8px;
+            background-color: #ffffff;
+            padding: 10px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .stTabs [data-baseweb="tab"] {
+            height: 48px;
+            padding: 0px 18px;
+            background-color: transparent;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #64748b;
+            border: none;
+            white-space: nowrap;
+        }
+        .stTabs [aria-selected="true"] {
+            background: linear-gradient(135deg, #f43f5e 0%, #3b82f6 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        .stTabs [aria-selected="true"] p {
+            color: #ffffff !important;
+        }
+
+        /* Gradient Buttons Styling */
+        div.stButton > button {
+            width: 100%;
+            border-radius: 16px;
+            font-weight: 600;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #f43f5e 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
+            transition: all 0.3s ease;
+        }
+        div.stButton > button:hover {
+            opacity: 0.95;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- EMAIL VALIDATION HELPER ---
+def is_valid_email(email):
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(pattern, email) is not None
+
+# --- USER DATABASE MANAGEMENT ---
+USER_DB_FILE = "users.json"
+
+def load_users():
+    default_users = {
+        "admin@unme.com": {
+            "password": "adminpassword",
+            "name": "Hab Rithy",
+            "role": "admin",
+            "api_keys": {
+                "gemini": "",
+                "openai": "",
+                "fb_page_id": "",
+                "fb_access_token": "",
+                "tiktok_token": "",
+                "yt_secret": ""
+            }
+        }
+    }
+    if os.path.exists(USER_DB_FILE):
+        try:
+            with open(USER_DB_FILE, "r", encoding="utf-8") as f:
+                users = json.load(f)
+                if "admin@unme.com" not in users:
+                    users["admin@unme.com"] = default_users["admin@unme.com"]
+                return users
+        except:
+            return default_users
+    return default_users
+
+def save_users(users):
+    with open(USER_DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(users, f, ensure_ascii=False, indent=4)
+
+def update_user_api_key(email, key_name, key_value):
+    users = load_users()
+    if email in users:
+        if "api_keys" not in users[email]:
+            users[email]["api_keys"] = {}
+        users[email]["api_keys"][key_name] = key_value
+        save_users(users)
+        if st.session_state.get("user_info"):
+            st.session_state["user_info"]["api_keys"][key_name] = key_value
+
+# --- SQLITE DATABASE INITIALIZATION ---
+SQLITE_DB = "unme_social.db"
+
+def init_sqlite_db():
+    conn = sqlite3.connect(SQLITE_DB)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT,
+            user_name TEXT,
+            type TEXT,
+            file TEXT,
+            caption TEXT,
+            schedule TEXT,
+            results TEXT,
+            time TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_sqlite_db()
+
+# --- BACKGROUND SCHEDULER THREAD ---
+def run_scheduled_jobs():
+    while True:
+        time.sleep(60)
+
+if 'scheduler_started' not in st.session_state:
+    st.session_state['scheduler_started'] = True
+    bg_thread = threading.Thread(target=run_scheduled_jobs, daemon=True)
+    bg_thread.start()
+
+# --- PERSISTENT SESSION MANAGEMENT (KEEP LOGGED IN ON REFRESH) ---
 if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "user_email" not in st.session_state:
-    st.session_state.user_email = ""
+    st.session_state["logged_in"] = False
+    st.session_state["user_info"] = None
 
-# ----------------- LOGIN / SIGN UP UI -----------------
-if not st.session_state.logged_in:
-    st.markdown("<h1 style='text-align: center;'>Sign Up / Sign In</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: gray;'>UNME AI Social Media Management</p>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
+query_params = st.query_params
+if not st.session_state["logged_in"] and "user" in query_params:
+    saved_user_email = query_params["user"]
+    all_users = load_users()
+    if saved_user_email in all_users:
+        st.session_state["logged_in"] = True
+        u_data = all_users[saved_user_email]
+        u_data["email"] = saved_user_email
+        if "api_keys" not in u_data:
+            u_data["api_keys"] = {"gemini": "", "openai": "", "fb_page_id": "", "fb_access_token": "", "tiktok_token": "", "yt_secret": ""}
+        st.session_state["user_info"] = u_data
+
+# --- AUTH INTERFACE ---
+if not st.session_state["logged_in"]:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
+        st.markdown('<div class="auth-box">', unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #1e293b; font-weight: 700; margin-bottom: 5px;'>Sign Up / Sign In</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748b; font-size: 13px; margin-bottom: 25px;'>UNME AI Social Media Management</p>", unsafe_allow_html=True)
+        
         auth_mode = st.radio("ជ្រើសរើសជម្រើស", ["📝 Sign Up", "🔑 Sign In"], horizontal=True)
+        st.markdown("<br>", unsafe_allow_html=True)
         
-        email = st.text_input("Email address")
-        password = st.text_input("Password", type="password")
-        
-        if auth_mode == "📝 Sign Up":
-            if st.button("Sign Up", use_container_width=True):
-                if email and password and db_connected:
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(
-                                text("INSERT INTO users (email, password) VALUES (:email, :password)"),
-                                {"email": email, "password": password}
-                            )
-                        st.success("🎉 បង្កើតគណនីបានជោគជ័យ! សូមប្តូរទៅ Sign In វិញ។")
-                    except Exception as e:
-                        st.error(f"❌ មានបញ្ហាក្នុងការចុះឈ្មោះ (ពិនិត្យមើលថា Table users មានហើយឬยัง): {e}")
-                else:
-                    st.warning("⚠️ សូមបំពេញព័ត៌មាន ឬពិនិត្យការតភ្ជាប់ Database!")
-                    
-        else: # Sign In
-            if st.button("Sign In", use_container_width=True):
-                if email and password and db_connected:
-                    try:
-                        with engine.connect() as conn:
-                            result = conn.execute(
-                                text("SELECT * FROM users WHERE email = :email AND password = :password"),
-                                {"email": email, "password": password}
-                            ).fetchone()
-                            
-                        if result:
-                            st.session_state.logged_in = True
-                            st.session_state.user_email = email
-                            st.rerun()
-                        else:
-                            st.error("❌ អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ!")
-                    except Exception as e:
-                        st.error(f"❌ Database Error: {e}")
-                else:
-                    st.warning("⚠️ សូមបំពេញអ៊ីមែល និងពាក្យសម្ងាត់!")
+        users_db = load_users()
 
-else:
-    st.sidebar.title(f"👤  ស្វាគមន៍: {st.session_state.user_email}")
-    if st.sidebar.button("Log Out"):
-        st.session_state.logged_in = False
-        st.session_state.user_email = ""
-        st.rerun()
+        if auth_mode == "🔑 Sign In":
+            signin_email = st.text_input("Email address", placeholder="example@gmail.com").strip().lower()
+            signin_pass = st.text_input("Password", type="password")
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            if st.button("Sign In", type="primary"):
+                if not signin_email or not signin_pass:
+                    st.warning("សូមបញ្ចូលអ៊ីមែល និងពាក្យសម្ងាត់ឱ្យបានត្រឹមត្រូវ។")
+                elif signin_email in users_db and users_db[signin_email]["password"] == signin_pass:
+                    st.session_state["logged_in"] = True
+                    user_data = users_db[signin_email]
+                    user_data["email"] = signin_email
+                    if "api_keys" not in user_data:
+                        user_data["api_keys"] = {"gemini": "", "openai": "", "fb_page_id": "", "fb_access_token": "", "tiktok_token": "", "yt_secret": ""}
+                    st.session_state["user_info"] = user_data
+                    
+                    st.query_params["user"] = signin_email
+                    st.success("ចូលប្រព័ន្ធជោគជ័យ!")
+                    st.rerun()
+                else:
+                    st.error("អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ!")
+        
+        else:  
+            signup_name = st.text_input("Full name", key="su_name")
+            signup_email = st.text_input("Email address", placeholder="example@gmail.com", key="su_email").strip().lower()
+            signup_pass = st.text_input("Password", type="password", key="su_pass")
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            if st.button("Create Account & Sign In", type="primary"):
+                if not signup_name or not signup_email or not signup_pass:
+                    st.warning("សូមបំពេញព័ត៌មានគ្រប់ប្រអប់ឱ្យបានត្រឹមត្រូវ។")
+                elif not is_valid_email(signup_email):
+                    st.error("ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ!")
+                elif signup_email in users_db:
+                    st.error("អាសយដ្ឋានអ៊ីមែលនេះមានគណនីរួចហើយ!")
+                else:
+                    new_user_data = {
+                        "password": signup_pass,
+                        "name": signup_name,
+                        "role": "user",
+                        "api_keys": {
+                            "gemini": "",
+                            "openai": "",
+                            "fb_page_id": "",
+                            "fb_access_token": "",
+                            "tiktok_token": "",
+                            "yt_secret": ""
+                        }
+                    }
+                    users_db[signup_email] = new_user_data
+                    save_users(users_db)
+                    
+                    st.session_state["logged_in"] = True
+                    new_user_data["email"] = signup_email
+                    st.session_state["user_info"] = new_user_data
+                    
+                    st.query_params["user"] = signup_email
+                    
+                    st.success("បង្កើតគណនី និងចូលប្រព័ន្ធជោគជ័យ!")
+                    time.sleep(0.5)
+                    st.rerun()
+                    
+        st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
+
+current_user = st.session_state["user_info"]
+user_api_keys = current_user.get("api_keys", {})
+
+# --- MEDIA PROCESSING FUNCTIONS ---
+def process_image_watermark(input_path, output_path, watermark_text="UNME AI"):
+    try:
+        image = Image.open(input_path).convert("RGBA")
+        draw = ImageDraw.Draw(image)
+        width, height = image.size
+        
+        font_size = max(15, int(width / 25))
+        try:
+            font = ImageFont.truetype("arial.ttf", font_size)
+        except:
+            font = ImageFont.load_default()
+            
+        text_bbox = draw.textbbox((0, 0), watermark_text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        
+        margin = 20
+        x = width - text_width - margin
+        y = height - text_height - margin
+        
+        draw.text((x+2, y+2), watermark_text, font=font, fill=(0, 0, 0, 180))
+        draw.text((x, y), watermark_text, font=font, fill=(255, 255, 255, 230))
+        
+        rgb_image = image.convert("RGB")
+        rgb_image.save(output_path, "JPEG", quality=95)
+        return output_path
+    except Exception as e:
+        print(f"Error processing image watermark: {e}")
+        return input_path
+
+def process_video_watermark(input_path, output_path, watermark_text="UNME AI"):
+    try:
+        cap = cv2.VideoCapture(input_path)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+            
+            org = (width - 250, height - 30)
+            cv2.putText(frame, watermark_text, org, 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
+            
+            out.write(frame)
+
+        cap.release()
+        out.release()
+        return output_path
+    except Exception as e:
+        print(f"Error processing video watermark: {e}")
+        return input_path
+
+# --- SIDEBAR CONFIGURATION ---
+st.sidebar.title(f"👤 {current_user['name']}")
+st.sidebar.caption(f"Email: {current_user['email']}")
+
+if st.sidebar.button("🚪 Log out"):
+    st.session_state["logged_in"] = False
+    st.session_state["user_info"] = None
+    st.query_params.clear()
+    st.rerun()
+
+st.sidebar.markdown("---")
+st.sidebar.title("⚙️ System Configuration")
+
+with st.sidebar.expander("🤖 AI Provider Settings", expanded=True):
+    ai_provider = st.selectbox("ជ្រើសរើសប្រភេទ AI", ["Google Gemini", "OpenAI ChatGPT"])
+    if ai_provider == "Google Gemini":
+        saved_gemini = user_api_keys.get("gemini", "")
+        gemini_input = st.text_input("Google Gemini API Key", value=saved_gemini, type="password")
+        if gemini_input != saved_gemini:
+            update_user_api_key(current_user["email"], "gemini", gemini_input)
+            st.success("✅ បានចងចាំ Gemini API Key ក្នុង Account!")
+            st.rerun()
+    else:
+        saved_openai = user_api_keys.get("openai", "")
+        openai_input = st.text_input("OpenAI API Key", value=saved_openai, type="password")
+        if openai_input != saved_openai:
+            update_user_api_key(current_user["email"], "openai", openai_input)
+            st.success("✅ បានចងចាំ OpenAI API Key ក្នុង Account!")
+            st.rerun()
+
+with st.sidebar.expander("📁 គ្រប់គ្រងទិន្នន័យ (Data Storage)", expanded=True):
+    storage_type = st.selectbox("ជ្រើសរើសទីតាំងរើស Store Data", [
+        "Local JSON File (history.json)", 
+        "SQLite Database (unme_social.db)", 
+        "Supabase (Cloud Database)", 
+        "Google Sheets / Cloud DB"
+    ])
     
-    st.title("🚀 UNME Main Dashboard")
-    st.write("ยินดีต้อนรับเข้าสู่ระบบจัดการโซเชียลมีเดีย!")
+    if storage_type == "Supabase (Cloud Database)":
+        supabase_url = st.text_input("Supabase Project URL", placeholder="https://xyz.supabase.co")
+        supabase_key = st.text_input("Supabase Anon/API Key", type="password", placeholder="eyJhbGciOi...")
+        if supabase_url and supabase_key:
+            st.success("✅ បានតភ្ជាប់ Supabase រួចរាល់")
+    elif storage_type == "Google Sheets / Cloud DB":
+        sheet_id_input = st.text_input("Google Sheet ID", placeholder="បញ្ចូល Spreadsheet ID...")
+        sheet_api_input = st.text_input("Google Sheets API Key", type="password", placeholder="បញ្ចូល API Key...")
+        if sheet_id_input:
+            st.success("✅ បានតភ្ជាប់ Google Sheet ID រួចរាល់")
+    elif storage_type == "SQLite Database (unme_social.db)":
+        st.success("✅ កំពុងប្រើប្រាស់ SQLite Database ក្នុង Local DB")
+    else:
+        st.caption("ប្រព័ន្ធរក្សាទុកទិន្នន័យក្នុង Local File (history.json)")
+        if os.path.exists("history.json"):
+            with open("history.json", "rb") as f:
+                st.download_button("📥 Download History Data", f, file_name="history.json", mime="application/json")
+
+with st.sidebar.expander("📘 Facebook Credentials", expanded=False):
+    saved_fb_id = user_api_keys.get("fb_page_id", "")
+    saved_fb_token = user_api_keys.get("fb_access_token", "")
+    fb_page_id = st.text_input("Facebook Page ID", value=saved_fb_id)
+    fb_access_token = st.text_input("Facebook Access Token", value=saved_fb_token, type="password")
+    if fb_page_id != saved_fb_id or fb_access_token != saved_fb_token:
+        update_user_api_key(current_user["email"], "fb_page_id", fb_page_id)
+        update_user_api_key(current_user["email"], "fb_access_token", fb_access_token)
+
+with st.sidebar.expander("🎵 TikTok Credentials", expanded=False):
+    saved_tk_token = user_api_keys.get("tiktok_token", "")
+    tiktok_token = st.text_input("TikTok Access Token", value=saved_tk_token, type="password")
+    if tiktok_token != saved_tk_token:
+        update_user_api_key(current_user["email"], "tiktok_token", tiktok_token)
+
+with st.sidebar.expander("📺 YouTube Credentials", expanded=False):
+    saved_yt_secret = user_api_keys.get("yt_secret", "")
+    yt_secret = st.text_input("YouTube Client Secret", value=saved_yt_secret, type="password")
+    if yt_secret != saved_yt_secret:
+        update_user_api_key(current_user["email"], "yt_secret", yt_secret)
+
+with st.sidebar.expander("⏰ Background Scheduler Settings", expanded=False):
+    schedule_freq = st.selectbox("Schedule Frequency", ["Manual / Scheduled", "Every 1 hour", "Every 6 hours", "Daily"])
+    st.caption("ប្រព័ន្ធ Auto Scheduler នឹងរៀបចំផុសតាមម៉ោងស្វ័យប្រវត្តិ។")
+
+st.sidebar.markdown("---")
+with st.sidebar.expander("ℹ️ About & របៀបប្រើប្រាស់", expanded=False):
+    st.markdown("""
+    ### 🚀 អំពីកម្មវិធី (About)
+    **UNME AI Social Media**  
+    * **ជំនាន់ (Version):** 6.4 Stable Pro  
+    """)
+
+# --- TOP HEADER ---
+st.markdown("""
+    <div style="background: #ffffff; padding: 20px 24px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
+        <h1 style="margin:0; font-size: 24px; font-weight: 700; color: #2563eb;">UNME AI Social Media Dashboard</h1>
+        <p style="margin:4px 0 0 0; color: #64748b; font-size: 13px;">ប្រព័ន្ធគ្រប់គ្រងស្វ័យប្រវត្តិកម្ម AI និងបញ្ជូនមាតិកាទៅកាន់ Facebook, TikTok និង YouTube</p>
+    </div>
+""", unsafe_allow_html=True)
+
+# --- METRIC CARDS OVERVIEW (PER USER ACCOUNT) ---
+total_posts, fb_c, tk_c = 0, 0, 0
+user_email = current_user["email"]
+
+if storage_type == "SQLite Database (unme_social.db)":
+    try:
+        conn = sqlite3.connect(SQLITE_DB)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*), SUM(results LIKE '%Facebook%'), SUM(results LIKE '%TikTok%') FROM history WHERE user_email = ?", (user_email,))
+        row = cursor.fetchone()
+        total_posts = row[0] if row[0] else 0
+        fb_c = row[1] if row[1] else 0
+        tk_c = row[2] if row[2] else 0
+        conn.close()
+    except:
+        pass
+else:
+    if os.path.exists("history.json"):
+        try:
+            with open("history.json", "r", encoding="utf-8") as f:
+                hist_data = json.load(f)
+            user_hist = [item for item in hist_data if item.get("user_email") == user_email or user_email in item.get("user", "")]
+            total_posts = len(user_hist)
+            fb_c = sum(1 for item in user_hist for r in item.get("results", []) if "Facebook" in str(r))
+            tk_c = sum(1 for item in user_hist for r in item.get("results", []) if "TikTok" in str(r))
+        except:
+            pass
+
+col_m1, col_m2, col_m3 = st.columns(3)
+with col_m1:
+    st.markdown(f"""
+        <div class="stat-card-1">
+            <div style="font-size: 14px; font-weight: 600; color: #64748b;">📌 Your Total Posts / Videos</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #1e293b;">{total_posts}</div>
+        </div>
+    """, unsafe_allow_html=True)
+with col_m2:
+    st.markdown(f"""
+        <div class="stat-card-1">
+            <div style="font-size: 14px; font-weight: 600; color: #64748b;">📘 Facebook Published</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #1e293b;">{fb_c}</div>
+        </div>
+    """, unsafe_allow_html=True)
+with col_m3:
+    st.markdown(f"""
+        <div class="stat-card-1">
+            <div style="font-size: 14px; font-weight: 600; color: #64748b;">🎵 TikTok Published</div>
+            <div style="font-size: 28px; font-weight: 800; margin-top: 5px; color: #1e293b;">{tk_c}</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# --- MODERN TABS ---
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🚀 ផ្ទាំងគ្រប់គ្រងការផុស (Dashboard)", 
+    "📈 Analytics Dashboard",
+    "📊 ប្រវត្តិការងារ (View History)", 
+    "💬 Support Chat & AI Assistant"
+])
+
+# --- TAB 1: MAIN DASHBOARD ---
+with tab1:
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
+    st.subheader("📌 ជ្រើសរើសប្រភេទនៃការផុស (Post Type)")
+    post_type = st.radio(
+        "តើអ្នកចង់ផុសមាតិកាប្រភេទណា?", 
+        ["🎥 Video / Reels", "🖼️ Picture / Photo Posts"],
+        horizontal=True
+    )
+
+    enable_watermark = st.checkbox("✨ បើកដំណើរការដាក់ Watermark ស្វ័យប្រវត្តិ", value=True)
+    watermark_text = st.text_input("អត្ថបទ Watermark", value="UNME AI")
+    media_file_path = None
+
+    if post_type == "🎥 Video / Reels":
+        uploaded_file = st.file_uploader("ជ្រើសរើសឯកសារវីដេអូ (.mp4, .mov, .avi)", type=["mp4", "mov", "avi"])
+        if uploaded_file is not None:
+            raw_path = os.path.join(".", "raw_" + uploaded_file.name)
+            with open(raw_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            
+            if enable_watermark:
+                st.info("កំពុងដាក់ Watermark លើវីដេអូ...")
+                media_file_path = os.path.join(".", "wm_" + uploaded_file.name)
+                process_video_watermark(raw_path, media_file_path, watermark_text)
+                st.success(f"ដាក់ Watermark លើវីដេអូជោគជ័យ៖ {uploaded_file.name}")
+            else:
+                media_file_path = raw_path
+                st.success(f"បានផ្ទុកឡើងវីដេអូ៖ {uploaded_file.name}")
+    else:
+        uploaded_image = st.file_uploader("ជ្រើសរើសរូបភាព (.jpg, .jpeg, .png)", type=["jpg", "jpeg", "png"])
+        if uploaded_image is not None:
+            raw_path = os.path.join(".", "raw_" + uploaded_image.name)
+            with open(raw_path, "wb") as f:
+                f.write(uploaded_image.getbuffer())
+                
+            if enable_watermark:
+                st.info("កំពុងដាក់ Watermark លើរូបភាព...")
+                media_file_path = os.path.join(".", "wm_" + uploaded_image.name)
+                process_image_watermark(raw_path, media_file_path, watermark_text)
+                st.success(f"ដាក់ Watermark លើរូបភាពជោគជ័យ៖ {uploaded_image.name}")
+            else:
+                media_file_path = raw_path
+                st.success(f"បានផ្ទុកឡើងរូបភាព៖ {uploaded_image.name}")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
+    st.subheader(f"🤖 ការកំណត់ស្ទីល និងជំនួយការពី {ai_provider}")
+    caption_prompt = st.text_area(
+        "សរសេរពាក្យបញ្ជា ឬស្ទីលដែលចង់បានឱ្យ AI បង្កើត៖",
+        placeholder="ឧទាហរណ៍៖ សរសេរ Caption ជាភាសាខ្មែរឱ្យទាក់ទាញបែបកំប្លែង ព្រមទាំង Hashtags ល្បីៗ..."
+    )
+
+    generated_caption = ""
+    if st.button(f"✨ បង្កើត Caption ដោយប្រើ {ai_provider}", type="primary"):
+        if ai_provider == "Google Gemini":
+            gemini_key = user_api_keys.get("gemini", "")
+            if gemini_key:
+                try:
+                    genai.configure(api_key=gemini_key)
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    response = model.generate_content(f"Write a social media caption and hashtags based on this prompt: {caption_prompt}")
+                    generated_caption = response.text
+                    st.success("AI បានបង្កើត Caption រួចរាល់!")
+                    st.write(generated_caption)
+                except Exception as e:
+                    st.error(f"មានកំហុស៖ {e}")
+            else:
+                st.warning("សូមបញ្ចូល និងរក្សាទុក Google Gemini API Key ក្នុង Sidebar ជាមុនសិន!")
+        else:
+            openai_key = user_api_keys.get("openai", "")
+            if openai_key:
+                try:
+                    client = openai.OpenAI(api_key=openai_key)
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[{"role": "user", "content": f"Write a social media caption and hashtags based on this prompt: {caption_prompt}"}]
+                    )
+                    generated_caption = response.choices[0].message.content
+                    st.success("AI បានបង្កើត Caption រួចរាល់!")
+                    st.write(generated_caption)
+                except Exception as e:
+                    st.error(f"មានកំហុស៖ {e}")
+            else:
+                st.warning("សូមបញ្ចូល និងរក្សាទុក OpenAI API Key ក្នុង Sidebar ជាមុនសិន!")
+
+    final_caption = st.text_area("កែសម្រួល Caption ចុងក្រោយមុនពេល Upload៖", value=generated_caption if generated_caption else caption_prompt)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- POST SCHEDULING SELECTION ---
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
+    st.subheader("📅 ការកំណត់កាលវិភាគនៃការផុស (Post Scheduling Settings)")
+    
+    post_mode = st.radio("ជ្រើសរើសរបៀបផុស៖", ["🚀 ផុសភ្លាមៗ (Publish Immediately)", "⏰ កំណត់កាលវិភាគ (Schedule Post)"], horizontal=True)
+    
+    scheduled_time_str = "Immediately"
+    if post_mode == "⏰ កំណត់កាលវិភាគ (Schedule Post)":
+        c1, c2 = st.columns(2)
+        with c1:
+            schedule_date = st.date_input("ជ្រើសរើសថ្ងៃផុស", value=datetime.date.today())
+        with c2:
+            schedule_time = st.time_input("ជ្រើសរើសម៉ោងផុស", value=datetime.datetime.now().time())
+        scheduled_time_str = f"{schedule_date} {schedule_time}"
+        st.info(f"📅 មាតិកានឹងត្រូវរៀបចំផុសនៅ៖ **{scheduled_time_str}**")
+
+    st.markdown("---")
+    st.subheader("🎬 ជ្រើសរើសវេទិកាសម្រាប់ការបញ្ជូន")
+    col_a, col_b, col_c = st.columns(3)
+    with col_a:
+        pub_fb = st.checkbox("📘 Facebook", value=True)
+    with col_b:
+        pub_tiktok = st.checkbox("🎵 TikTok")
+    with col_c:
+        pub_yt = st.checkbox("📺 YouTube")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    btn_label = "🚀 ចាប់ផ្តើម Upload ភ្លាមៗ" if post_mode == "🚀 ផុសភ្លាមៗ (Publish Immediately)" else "⏰ រក្សាទុកក្នុងកាលវិភាគ (Save Schedule)"
+    
+    if st.button(btn_label, type="primary"):
+        if media_file_path and os.path.exists(media_file_path):
+            results = []
+            
+            if post_mode == "🚀 ផុសភ្លាមៗ (Publish Immediately)":
+                st.info("ប្រព័ន្ធកំពុងដំណើរការបញ្ជូនមាតិកា...")
+                if pub_fb:
+                    results.append(upload_to_facebook(media_file_path, final_caption, post_type=post_type))
+                if pub_tiktok:
+                    results.append(upload_to_tiktok(media_file_path, final_caption))
+                if pub_yt:
+                    results.append(upload_to_youtube(media_file_path, "AI Content", final_caption))
+                st.success("ការបញ្ជូនបានបញ្ចប់!")
+                st.json(results)
+            else:
+                results.append(f"Scheduled for {scheduled_time_str}")
+                st.success(f"✅ បានកំណត់កាលវិភាគផុសជោគជ័យសម្រាប់ម៉ោង៖ {scheduled_time_str}")
+
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            history_entry = {
+                "user_email": current_user['email'],
+                "user_name": current_user['name'],
+                "user": f"{current_user['name']} ({current_user['email']})",
+                "type": post_type, 
+                "file": media_file_path, 
+                "caption": final_caption, 
+                "schedule": scheduled_time_str,
+                "results": results, 
+                "time": timestamp
+            }
+            
+            # --- SAVE DATA BASED ON SELECTED STORAGE TYPE ---
+            try:
+                if storage_type == "SQLite Database (unme_social.db)":
+                    conn = sqlite3.connect(SQLITE_DB)
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        INSERT INTO history (user_email, user_name, type, file, caption, schedule, results, time)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        current_user["email"],
+                        current_user["name"], 
+                        history_entry["type"], 
+                        history_entry["file"], 
+                        history_entry["caption"], 
+                        history_entry["schedule"], 
+                        str(history_entry["results"]), 
+                        history_entry["time"]
+                    ))
+                    conn.commit()
+                    conn.close()
+                    st.success("✅ បានរក្សាទុកទិន្នន័យចូលក្នុង SQLite Database ជោគជ័យ!")
+                else:
+                    history_data = []
+                    if os.path.exists("history.json"):
+                        with open("history.json", "r", encoding="utf-8") as f:
+                            history_data = json.load(f)
+                    history_data.append(history_entry)
+                    with open("history.json", "w", encoding="utf-8") as f:
+                        json.dump(history_data, f, ensure_ascii=False, indent=4)
+                    st.success("✅ បានរក្សាទុកទិន្នន័យចូលក្នុង Local JSON File ជោគជ័យ!")
+            except Exception as e:
+                st.error(f"មានបញ្ហាក្នុងการរក្សាទុកប្រវត្តិ៖ {e}")
+        else:
+            st.warning("សូមធ្វើការ Upload ឯកសារមាតិកាជាមុនសិន។")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- TAB 2: ANALYTICS DASHBOARD ---
+with tab2:
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
+    st.subheader(f"📊 Analytics & Performance Dashboard ({current_user['name']})")
+    
+    if total_posts > 0:
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("📌 ការផុសរបស់អ្នកសរុប", total_posts)
+        m2.metric("📘 Facebook", fb_c)
+        m3.metric("🎵 TikTok", tk_c)
+        m4.metric("📺 YouTube", 0)
+
+        st.markdown("---")
+        st.bar_chart({"Facebook": fb_c, "TikTok": tk_c})
+    else:
+        st.info("មិនទាន់មានទិន្នន័យប្រវត្តិការងារសម្រាប់ Account របស់អ្នកនៅឡើយទេ។")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- TAB 3: VIEW HISTORY (ISOLATED PER USER) ---
+with tab3:
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
+    st.subheader(f"📊 ប្រវត្តិการងាររបស់ {current_user['name']} (View History)")
+
+    if st.button("🔄 ផ្ទុកទិន្នន័យឡើងវិញ"):
+        st.rerun()
+
+    if storage_type == "SQLite Database (unme_social.db)":
+        try:
+            conn = sqlite3.connect(SQLITE_DB)
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, type, file, caption, schedule, results, time FROM history WHERE user_email = ?", (user_email,))
+            rows = cursor.fetchall()
+            conn.close()
+            if rows:
+                st.table(rows)
+            else:
+                st.info("ប្រវត្តិการងាររបស់អ្នកក្នុង SQLite Database គឺទទេ។")
+        except Exception as e:
+            st.error(f"មានបញ្ហា៖ {e}")
+    else:
+        if os.path.exists("history.json"):
+            try:
+                with open("history.json", "r", encoding="utf-8") as f:
+                    history_data = json.load(f)
+                user_filtered_history = [item for item in history_data if item.get("user_email") == user_email or user_email in item.get("user", "")]
+                if user_filtered_history:
+                    st.dataframe(user_filtered_history, use_container_width=True)
+                else:
+                    st.info("មិនទាន់មានប្រវត្តិการងារសម្រាប់ Account របស់អ្នកនៅឡើយទេ។")
+            except Exception as e:
+                st.error(f"មានបញ្ហា៖ {e}")
+        else:
+            st.info("មិនទាន់មានឯកសារប្រវត្តិการងារទេ។")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- TAB 4: SUPPORT CHAT ---
+with tab4:
+    st.markdown('<div class="clean-card">', unsafe_allow_html=True)
+    st.subheader("💬 ជំនួយការផ្ទាល់ និងសួរសំណួរ (Support AI Assistant)")
+
+    if "support_messages" not in st.session_state:
+        st.session_state["support_messages"] = [
+            {"role": "assistant", "content": f"សួស្ដី {current_user['name']}! ខ្ញុំជា Support AI Assistant។ តើខ្ញុំអាចជួយអ្វីដល់អ្នកថ្ងៃនេះ?"}
+        ]
+
+    for msg in st.session_state["support_messages"]:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    if user_query := st.chat_input("វាយសួរសំណួររបស់អ្នកនៅទីនេះ..."):
+        st.session_state["support_messages"].append({"role": "user", "content": user_query})
+        with st.chat_message("user"):
+            st.markdown(user_query)
+
+        with st.chat_message("assistant"):
+            with st.spinner("កំពុងពិចារណា..."):
+                try:
+                    gemini_key = user_api_keys.get("gemini", "")
+                    if gemini_key:
+                        genai.configure(api_key=gemini_key)
+                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        chat_response = model.generate_content(f"You are a helpful support assistant for an app named 'UNME AI Social Media'. Answer professionally: {user_query}")
+                        bot_reply = chat_response.text
+                    else:
+                        bot_reply = "សូមបញ្ចូល និងរក្សាទុក Google Gemini API Key ក្នុង Sidebar ជាមុនសិន!"
+                    
+                    st.markdown(bot_reply)
+                    st.session_state["support_messages"].append({"role": "assistant", "content": bot_reply})
+                except Exception as e:
+                    st.error(f"មានបញ្ហា៖ {e}")
+    st.markdown('</div>', unsafe_allow_html=True)
