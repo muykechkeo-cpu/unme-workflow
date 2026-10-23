@@ -1,7 +1,6 @@
 import os
 import streamlit as st
 from sqlalchemy import create_engine, text
-from multi_platform import upload_to_facebook, upload_to_tiktok, upload_to_youtube
 
 # Page Configuration
 st.set_page_config(
@@ -10,54 +9,28 @@ st.set_page_config(
     layout="wide"
 )
 
-# ----------------- DATABASE CONFIGURATION & AUTO-CREATION -----------------
+# ----------------- DATABASE CONNECTION -----------------
 DB_USER = "postgres"
 DB_PASSWORD = "039601"  
 DB_HOST = "127.0.0.1"
 DB_PORT = "5432"
 DB_NAME = "unme_social"
 
-# ជំហានទី១៖ តភ្ជាប់ទៅកាន់ Server ដើមដោយប្រើ psycopg2 Driver ដើម្បីពិនិត្យ និងបង្កើត Database ថ្មីដោយស្វ័យប្រវត្តិ
-default_url = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/postgres?sslmode=disable"
-default_engine = create_engine(default_url, isolation_level="AUTOCOMMIT")
-
-try:
-    with default_engine.connect() as conn:
-        result = conn.execute(text(f"SELECT 1 FROM pg_database WHERE datname = '{DB_NAME}'")).fetchone()
-        if not result:
-            conn.execute(text(f"CREATE DATABASE {DB_NAME}"))
-            st.toast(f"🎉 Created database: {DB_NAME}")
-except Exception as e:
-    st.error(f"❌ មិនអាចបង្កើត Database បានទេ: {e}")
-
-# ជំហានទី២៖ តភ្ជាប់ចូលទៅកាន់ Database unme_social ផ្ទាល់ ដើម្បីបង្កើត Tables (users និង history)
+# តភ្ជាប់ដោយตรงជាមួយ Database តែម្តង ដើម្បីការពារការស្ទះ
 DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=disable"
+
 @st.cache_resource
 def get_db_engine():
     return create_engine(DATABASE_URL)
 
 try:
     engine = get_db_engine()
-    with engine.begin() as conn:
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL
-            );
-        """))
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS history (
-                id SERIAL PRIMARY KEY,
-                email VARCHAR(255),
-                platform VARCHAR(50),
-                content TEXT,
-                status VARCHAR(50),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """))
+    # ពិនិត្យការតភ្ជាប់
+    with engine.connect() as conn:
+        db_connected = True
 except Exception as e:
-    st.error(f"❌ មិនអាចបង្កើត Tables បានទេ: {e}")
+    db_connected = False
+    st.error(f"❌ មិនអាចតភ្ជាប់ទៅកាន់ Database បានទេ: {e}")
 
 # ----------------- AUTHENTICATION SESSION -----------------
 if "logged_in" not in st.session_state:
@@ -79,7 +52,7 @@ if not st.session_state.logged_in:
         
         if auth_mode == "📝 Sign Up":
             if st.button("Sign Up", use_container_width=True):
-                if email and password:
+                if email and password and db_connected:
                     try:
                         with engine.begin() as conn:
                             conn.execute(
@@ -88,13 +61,13 @@ if not st.session_state.logged_in:
                             )
                         st.success("🎉 បង្កើតគណនីបានជោគជ័យ! សូមប្តូរទៅ Sign In វិញ។")
                     except Exception as e:
-                        st.error("❌ អ៊ីមែលនេះមានរួចរាល់ហើយ ឬមានបញ្ហាក្នុងការចុះឈ្មោះ!")
+                        st.error(f"❌ មានបញ្ហាក្នុងការចុះឈ្មោះ (ពិនិត្យមើលថា Table users មានហើយឬยัง): {e}")
                 else:
-                    st.warning("⚠️ សូមបំពេញអ៊ីមែល និងពាក្យសម្ងាត់ឱ្យបានគ្រប់គ្រាន់!")
+                    st.warning("⚠️ សូមបំពេញព័ត៌មាន ឬពិនិត្យការតភ្ជាប់ Database!")
                     
         else: # Sign In
             if st.button("Sign In", use_container_width=True):
-                if email and password:
+                if email and password and db_connected:
                     try:
                         with engine.connect() as conn:
                             result = conn.execute(
@@ -114,64 +87,11 @@ if not st.session_state.logged_in:
                     st.warning("⚠️ សូមបំពេញអ៊ីមែល និងពាក្យសម្ងាត់!")
 
 else:
-    # ----------------- MAIN APP DASHBOARD -----------------
     st.sidebar.title(f"👤  ស្វាគមន៍: {st.session_state.user_email}")
-    menu = st.sidebar.selectbox("មុខងារកម្មវិធី", ["📤 Upload & Publish", "📊 History Logs"])
-    
     if st.sidebar.button("Log Out"):
         st.session_state.logged_in = False
         st.session_state.user_email = ""
         st.rerun()
-
-    if menu == "📤 Upload & Publish":
-        st.title("🚀 UNME Multi-Platform Publisher")
-        
-        media_file = st.file_uploader("Upload Media (Video/Image)", type=["mp4", "jpg", "png", "jpeg"])
-        caption = st.text_area("Caption / Title")
-        platform = st.selectbox("Select Platform", ["Facebook", "TikTok", "YouTube"])
-        
-        if st.button("Publish Now"):
-            if media_file:
-                os.makedirs("uploaded", exist_ok=True)
-                file_path = os.path.join("uploaded", media_file.name)
-                with open(file_path, "wb") as f:
-                    f.write(media_file.getbuffer())
-                
-                res = ""
-                if platform == "Facebook":
-                    res = upload_to_facebook(file_path, caption)
-                elif platform == "TikTok":
-                    res = upload_to_tiktok(file_path, caption)
-                elif platform == "YouTube":
-                    res = upload_to_youtube(file_path, caption, "Auto uploaded via UNME")
-                
-                st.success(f"លទ្ធផល៖ {res}")
-                
-                # រក្សាទុកប្រវត្តិ (History) ចូល PostgreSQL Database
-                try:
-                    with engine.begin() as conn:
-                        conn.execute(
-                            text("INSERT INTO history (email, platform, content, status) VALUES (:email, :platform, :content, :status)"),
-                            {"email": st.session_state.user_email, "platform": platform, "content": caption, "status": "Success"}
-                        )
-                except Exception as e:
-                    st.warning(f"⚠️ រក្សាទុក History មិនទាន់បាន៖ {e}")
-            else:
-                st.warning("⚠️ សូម Upload ឯកសារមេឌៀជាមុនសិន!")
-
-    elif menu == "📊 History Logs":
-        st.title("📊 Upload History Logs")
-        try:
-            with engine.connect() as conn:
-                result = conn.execute(
-                    text("SELECT platform, content, status, created_at FROM history WHERE email = :email ORDER BY created_at DESC"),
-                    {"email": st.session_state.user_email}
-                ).fetchall()
-                
-            if result:
-                for row in result:
-                    st.info(f"**Platform:** {row[0]} | **Status:** {row[2]} | **Time:** {row[3]}\n\n**Content:** {row[1]}")
-            else:
-                st.write("មិនទាន់មានប្រវត្តិនៃការ Upload នៅឡើយទេ។")
-        except Exception as e:
-            st.error(f"❌ មិនអាចទាញយកទិន្នន័យ History បានទេ: {e}")
+    
+    st.title("🚀 UNME Main Dashboard")
+    st.write("ยินดีต้อนรับเข้าสู่ระบบจัดการโซเชียลมีเดีย!")
